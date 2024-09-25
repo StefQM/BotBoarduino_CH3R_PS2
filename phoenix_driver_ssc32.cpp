@@ -266,7 +266,7 @@ void ServoDriver::CommitServoDriver(word wMoveTime)
 #else
       //Send <CR>
     SSCSerial.print("T");
-    SSCSerial.println(ServoMoveTime, DEC);
+    SSCSerial.println(wMoveTime, DEC);
 #endif
 
     g_InputController.AllowControllerInterrupts(true);    
@@ -299,10 +299,10 @@ void  ServoDriver::SSCForwarder(void)
     MSound(SOUND_PIN, 1, 1000, 2000);  //sound SOUND_PIN, [50\4000]
     delay(2000);
     int sChar;
-    int sPrevChar;
+    int sPrevChar; 
     DBGSerial.println("SSC Forwarder mode - Enter $<cr> to exit");
     
-    while(digitalRead(PS2_CMD)) {
+    for (;;) {
         if ((sChar = DBGSerial.read()) != -1) {
             SSCSerial.write(sChar & 0xff);
             if (((sChar == '\n') || (sChar == '\r')) && (sPrevChar == '$'))

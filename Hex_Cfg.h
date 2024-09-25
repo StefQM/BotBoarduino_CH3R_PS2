@@ -13,16 +13,15 @@
 //Date: March 18, 2012
 //Programmer: Kurt (aka KurtE)
 //
+//
 //NEW IN V1.1 (2013-05-17)
 //   - Support for Arduino Pro Mini on Bot Board (originally for Basic Atom Pro)
 //NEW IN V1.0
 //   - First Release
 //
 //====================================================================
-
-//==================================================================================================================================
-//==================================================================================================================================
-//==================================================================================================================================
+#ifndef HEX_CFG_H
+#define HEX_CFG_H
 //[CONDITIONAL COMPILING] - COMMENT IF NOT WANTED
 // Define other optional compnents to be included or not...
 
@@ -61,39 +60,40 @@
 
 //[SERIAL CONNECTIONS]
 
+
 // Warning I will undefine some components as the non-megas don't have enough memory...
 //#undef OPT_FIND_SERVO_OFFSETS 
 
-#define cSSC_BAUD   38400   //SSC32 BAUD rate
+#define cSSC_BAUD        38400   //SSC32 BAUD rate
 
 //--------------------------------------------------------------------
 //[Botboarduino Pin Numbers]
 #ifdef __BOTBOARDUINO__
-  #define SOUND_PIN       5   // Botboarduino JR pin number
-  #define PS2_DAT         6        
-  #define PS2_CMD         7
-  #define PS2_SEL         8
-  #define PS2_CLK         9
+  #define SOUND_PIN    5        // Botboarduino JR pin number
+  #define PS2_DAT      6        
+  #define PS2_CMD      7
+  #define PS2_SEL      8
+  #define PS2_CLK      9
 // If we are using a SSC-32 then:
 // If were are running on an Arduino Mega we will use one of the hardware serial port, default to Serial1 above.
 // If on Non mega, if the IO pins are set to 0, we will overload the hardware Serial port 
 // Else we will user SoftwareSerial to talk to the SSC-32
-  #define cSSC_OUT       12   //Output pin for Botboard - Input of SSC32 (Yellow)
-  #define cSSC_IN        13   //Input pin for Botboard - Output of SSC32 (Blue)
+  #define cSSC_OUT     12      	//Output pin for (SSC32 RX) on BotBoard (Yellow)
+  #define cSSC_IN      13      	//Input pin for (SSC32 TX) on BotBoard (Blue)
 #endif
 
 #ifdef __BOTBOARD_ARDUINOPROMINI__
-  #define SOUND_PIN      11   // Bot Board JR pin number (with Arduino Pro Mini plugged)
-  #define PS2_DAT        14       
-  #define PS2_CMD        15
-  #define PS2_SEL        16
-  #define PS2_CLK        17
+  #define SOUND_PIN    11   // Bot Board JR pin number (with Arduino Pro Mini plugged)
+  #define PS2_DAT      14       
+  #define PS2_CMD      15
+  #define PS2_SEL      16
+  #define PS2_CLK      17
 // If we are using a SSC-32 then:
 // If were are running on an Arduino Mega we will use one of the hardware serial port, default to Serial1 above.
 // If on Non mega, if the IO pins are set to 0, we will overload the hardware Serial port 
 // Else we will user SoftwareSerial to talk to the SSC-32
-  #define cSSC_OUT       10   //Output pin for Botboard - Input of SSC32 (Yellow)
-  #define cSSC_IN         9   //Input pin for Botboard - Output of SSC32 (Blue)
+  #define cSSC_OUT     10   //Output pin for Botboard - Input of SSC32 (Yellow)
+  #define cSSC_IN      9    //Input pin for Botboard - Output of SSC32 (Blue)
 #endif
 
 //====================================================================
@@ -249,11 +249,21 @@
 
 //--------------------------------------------------------------------
 //[START POSITIONS FEET]
-#define cHexInitXZ	 80
-#define CHexInitXZCos60  40        // COS(60) = .5
-#define CHexInitXZSin60  69    // sin(60) = .866
-#define CHexInitY	80 //30
+#define cHexInitXZ	 111 
+#define CHexInitXZCos60  56        // COS(60) = .5
+#define CHexInitXZSin60  96    // sin(60) = .866
+#define CHexInitY		 65 //30
 
+// Lets try some multi leg positions depending on height settings.
+#define CNT_HEX_INITS 3
+#define MAX_BODY_Y  90
+#ifdef DEFINE_HEX_GLOBALS
+const byte g_abHexIntXZ[] PROGMEM = {cHexInitXZ, 99, 86};
+const byte g_abHexMaxBodyY[] PROGMEM = { 20, 50, MAX_BODY_Y};
+#else
+extern const byte g_abHexIntXZ[] PROGMEM;
+extern const byte g_abHexMaxBodyY[] PROGMEM;
+#endif
 
 #define cRRInitPosX     CHexInitXZCos60      //Start positions of the Right Rear leg
 #define cRRInitPosY     CHexInitY
@@ -286,3 +296,4 @@
 #define cTarsFactorB	60	//4DOF ONLY
 #define cTarsFactorC	50	//4DOF ONLY
 
+#endif CFG_HEX_H
