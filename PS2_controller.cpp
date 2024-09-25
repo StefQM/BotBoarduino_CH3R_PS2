@@ -111,7 +111,6 @@ byte            GPSeq;             //Number of the sequence
 // some external or forward function references.
 extern void MSound(uint8_t _pin, byte cNotes, ...);
 extern void PS2TurnRobotOff(void);
-extern void AdjustLegPositionsToBodyHeight(void);
 
 //==============================================================================
 // This is The function that is called by the Main program to initialize

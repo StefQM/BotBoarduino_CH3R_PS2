@@ -104,6 +104,8 @@ extern void	AllowControllerInterrupts(boolean fAllow);
 
 extern bool CheckVoltage(void);
 
+void AdjustLegPositionsToBodyHeight(void);
+
 // debug handler...
 extern boolean g_fDBGHandleError;
 
