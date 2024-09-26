@@ -306,6 +306,7 @@ void setup(){
     // Init our ServoDriver
     g_ServoDriver.Init();
     
+    //sTs - Latest Kurt release [9/9/2012] does not have this PS2_CMD check
     pinMode(PS2_CMD, INPUT);
     if(!digitalRead(PS2_CMD))
       g_ServoDriver.SSCForwarder();

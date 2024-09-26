@@ -296,8 +296,10 @@ void ServoDriver::FreeServos(void)
 #ifdef OPT_SSC_FORWARDER
 void  ServoDriver::SSCForwarder(void) 
 {
+    //sTs - Latest Kurt release [9/9/2012] does not have the sound+delay
     MSound(SOUND_PIN, 1, 1000, 2000);  //sound SOUND_PIN, [50\4000]
     delay(2000);
+	
     int sChar;
     int sPrevChar; 
     DBGSerial.println("SSC Forwarder mode - Enter $<cr> to exit");

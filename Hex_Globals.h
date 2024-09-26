@@ -51,6 +51,7 @@ extern INCONTROLSTATE   g_InControlState;		 // State information that controller
 //-----------------------------------------------------------------------------
 extern boolean          g_fDebugOutput;
 
+//sTs - Latest Kurt release [9/9/2012] does not have everything within #if 0
 #if 0
 extern boolean		g_fHexOn;				//Switch to turn on Phoenix
 extern boolean		g_fPrev_HexOn;			//Previous loop state 
@@ -95,7 +96,7 @@ extern void MSound(uint8_t _pin, byte cNotes, ...);
 //extern int DBGPrintf(const char *format, ...);
 //extern int SSCPrintf(const char *format, ...);
 
-
+//sTs - Latest Kurt release [9/9/2012] does not have the below 3 extern void declarations
 // The defined controller must provide the following
 extern void InitController(void);
 extern void	ControlInput(void);
