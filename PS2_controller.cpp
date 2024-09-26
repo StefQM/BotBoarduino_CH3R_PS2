@@ -126,7 +126,7 @@ void InputController::Init(void)
     //error = ps2x.config_gamepad(57, 55, 56, 54);  // Setup gamepad (clock, command, attention, data) pins
     error = ps2x.config_gamepad(PS2_CLK, PS2_CMD, PS2_SEL, PS2_DAT);  // Setup gamepad (clock, command, attention, data) pins
 
-    g_BodyYOffset = 0;    
+    g_BodyYOffset = 0;   // sTs - 65 = previous sTs value
     g_BodyYShift = 0;
     g_sPS2ErrorCnt = 0;  // error count
 
@@ -248,10 +248,11 @@ void InputController::ControlInput(void)
                     g_BodyYOffset = 0;
                 else
                     g_BodyYOffset = 35;
+					
                 fAdjustLegPositions = true;
             }
 
-            if (ps2x.ButtonPressed(PSB_PAD_UP)) {// D-Up - Button Test
+            if (ps2x.ButtonPressed(PSB_PAD_UP)) { // D-Up - Button Test
                 g_BodyYOffset += 10;
 
                 // And see if the legs should adjust...
@@ -260,11 +261,11 @@ void InputController::ControlInput(void)
                     g_BodyYOffset = MAX_BODY_Y;
             }
 
-            if (ps2x.ButtonPressed(PSB_PAD_DOWN) && g_BodyYOffset) {// D-Down - Button Test
+            if (ps2x.ButtonPressed(PSB_PAD_DOWN) && g_BodyYOffset) { // D-Down - Button Test
                 if (g_BodyYOffset > 10)
-                g_BodyYOffset -= 10;
+                    g_BodyYOffset -= 10;
                 else
-                  g_BodyYOffset = 0;      // constrain don't go less than zero.
+                    g_BodyYOffset = 0;      // constrain clipped at zero.
 
                 // And see if the legs should adjust...
                 fAdjustLegPositions = true;
@@ -408,7 +409,7 @@ void InputController::ControlInput(void)
         //Calculate g_InControlState.BodyPos.y
         g_InControlState.BodyPos.y = min(max(g_BodyYOffset + g_BodyYShift,  0), MAX_BODY_Y);
         if (fAdjustLegPositions)
-          AdjustLegPositionsToBodyHeight();    // Put main workings into main program file
+            AdjustLegPositionsToBodyHeight();    // Put main workings into main program file
     } else {
       // We may have lost the PS2... See what we can do to recover...
       if (g_sPS2ErrorCnt < MAXPS2ERRORCNT)

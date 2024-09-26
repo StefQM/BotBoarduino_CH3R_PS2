@@ -64,7 +64,7 @@
 // Warning I will undefine some components as the non-megas don't have enough memory...
 //#undef OPT_FIND_SERVO_OFFSETS 
 
-#define cSSC_BAUD        38400   //SSC32 BAUD rate
+#define cSSC_BAUD      38400    //SSC32 BAUD rate
 
 //--------------------------------------------------------------------
 //[Botboarduino Pin Numbers]
@@ -78,8 +78,8 @@
 // If were are running on an Arduino Mega we will use one of the hardware serial port, default to Serial1 above.
 // If on Non mega, if the IO pins are set to 0, we will overload the hardware Serial port 
 // Else we will user SoftwareSerial to talk to the SSC-32
-  #define cSSC_OUT     12      	//Output pin for (SSC32 RX) on BotBoard (Yellow)
-  #define cSSC_IN      13      	//Input pin for (SSC32 TX) on BotBoard (Blue)
+  #define cSSC_OUT     12   //Output pin for (SSC32 RX) on BotBoard (Yellow)
+  #define cSSC_IN      13   //Input pin for (SSC32 TX) on BotBoard (Blue)
 #endif
 
 #ifdef __BOTBOARD_ARDUINOPROMINI__
@@ -226,12 +226,12 @@
 
 //--------------------------------------------------------------------
 //[BODY DIMENSIONS]
-#define cRRCoxaAngle1   -600   //Default Coxa setup angle, decimals = 1
+#define cRRCoxaAngle1   -600    //Default Coxa setup angle, decimals = 1
 #define cRMCoxaAngle1    0      //Default Coxa setup angle, decimals = 1
-#define cRFCoxaAngle1    600      //Default Coxa setup angle, decimals = 1
+#define cRFCoxaAngle1    600    //Default Coxa setup angle, decimals = 1
 #define cLRCoxaAngle1    -600   //Default Coxa setup angle, decimals = 1
 #define cLMCoxaAngle1    0      //Default Coxa setup angle, decimals = 1
-#define cLFCoxaAngle1    600      //Default Coxa setup angle, decimals = 1
+#define cLFCoxaAngle1    600    //Default Coxa setup angle, decimals = 1
 
 #define cRROffsetX      -69     //Distance X from center of the body to the Right Rear coxa
 #define cRROffsetZ      119     //Distance Z from center of the body to the Right Rear coxa
@@ -249,10 +249,11 @@
 
 //--------------------------------------------------------------------
 //[START POSITIONS FEET]
-#define cHexInitXZ	 111 
-#define CHexInitXZCos60  56        // COS(60) = .5
-#define CHexInitXZSin60  96    // sin(60) = .866
-#define CHexInitY		 65 //30
+// sTs - Values of 2013 are 80 - 40 - 69 - 80
+#define cHexInitXZ	    111 
+#define CHexInitXZCos60  56     // COS(60) = .5
+#define CHexInitXZSin60  96     // sin(60) = .866
+#define CHexInitY		 65     //30
 
 // Lets try some multi leg positions depending on height settings.
 #define CNT_HEX_INITS 3

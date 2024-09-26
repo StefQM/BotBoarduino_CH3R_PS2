@@ -758,6 +758,9 @@ void GaitSelect(void)
 void GaitSeq(void)
 {
     //Check if the Gait is in motion
+    //TravelRequest = ((abs(g_InControlState.TravelLength.x)>cTravelDeadZone) || (abs(g_InControlState.TravelLength.z)>cTravelDeadZone) 
+    //      || (abs(g_InControlState.TravelLength.y)>cTravelDeadZone));   //sTs - 2013 version (when ForceGaitStepCnt was not introduced yet)
+
     TravelRequest = (abs(g_InControlState.TravelLength.x)>cTravelDeadZone) || (abs(g_InControlState.TravelLength.z)>cTravelDeadZone) 
           || (abs(g_InControlState.TravelLength.y)>cTravelDeadZone) || (g_InControlState.ForceGaitStepCnt != 0);
     if (NrLiftedPos == 5)

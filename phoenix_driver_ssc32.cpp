@@ -301,10 +301,12 @@ void  ServoDriver::SSCForwarder(void)
     delay(2000);
 	
     int sChar;
-    int sPrevChar; 
+    int sPrevChar;
     DBGSerial.println("SSC Forwarder mode - Enter $<cr> to exit");
     
-    for (;;) {
+	//sTs - Latest Kurt release [9/9/2012] has an infinite for loop
+    //for (;;) {
+	while(digitalRead(PS2_CMD)) {
         if ((sChar = DBGSerial.read()) != -1) {
             SSCSerial.write(sChar & 0xff);
             if (((sChar == '\n') || (sChar == '\r')) && (sPrevChar == '$'))
