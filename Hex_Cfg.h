@@ -297,4 +297,4 @@ extern const byte g_abHexMaxBodyY[] PROGMEM;
 #define cTarsFactorB	60	//4DOF ONLY
 #define cTarsFactorC	50	//4DOF ONLY
 
-#endif CFG_HEX_H
+#endif //CFG_HEX_H

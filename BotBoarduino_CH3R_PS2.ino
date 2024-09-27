@@ -1458,6 +1458,6 @@ void AdjustLegPositionsToBodyHeight(void)
       // Make sure we cycle through one gait to have the legs all move into their new locations...
       g_InControlState.ForceGaitStepCnt = StepsInGait;
     }
-#endif CNT_HEX_INITS
+#endif //CNT_HEX_INITS
 
 }
