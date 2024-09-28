@@ -23,7 +23,10 @@
 #ifndef HEX_CFG_H
 #define HEX_CFG_H
 //[CONDITIONAL COMPILING] - COMMENT IF NOT WANTED
-// Define other optional compnents to be included or not...
+// Define other optional components to be included or not...
+
+//uncomment the following line to activate 4 DoF
+//#define c4DOF
 
 //comment if terminal monitor is not required
 #define OPT_TERMINAL_MONITOR  
@@ -56,7 +59,7 @@
 // CHR-3
 //==================================================================================================================================
 #define USE_SSC32
-#define	cSSC_BINARYMODE	1			// Define if your SSC-32 card supports binary mode.
+#define	cSSC_BINARYMODE	1       // Define if your SSC-32 card supports binary mode.
 
 //[SERIAL CONNECTIONS]
 
@@ -64,36 +67,36 @@
 // Warning I will undefine some components as the non-megas don't have enough memory...
 //#undef OPT_FIND_SERVO_OFFSETS 
 
-#define cSSC_BAUD      38400    //SSC32 BAUD rate
+#define cSSC_BAUD     38400     //SSC32 BAUD rate
 
 //--------------------------------------------------------------------
 //[Botboarduino Pin Numbers]
 #ifdef __BOTBOARDUINO__
-  #define SOUND_PIN    5        // Botboarduino JR pin number
-  #define PS2_DAT      6        
-  #define PS2_CMD      7
-  #define PS2_SEL      8
-  #define PS2_CLK      9
+    #define SOUND_PIN    5      // Botboarduino JR pin number
+    #define PS2_DAT      6        
+    #define PS2_CMD      7
+    #define PS2_SEL      8      // On the PS2 receiver this pin may be called ATT (attention)
+    #define PS2_CLK      9
 // If we are using a SSC-32 then:
 // If were are running on an Arduino Mega we will use one of the hardware serial port, default to Serial1 above.
 // If on Non mega, if the IO pins are set to 0, we will overload the hardware Serial port 
 // Else we will user SoftwareSerial to talk to the SSC-32
-  #define cSSC_OUT     12   //Output pin for (SSC32 RX) on BotBoard (Yellow)
-  #define cSSC_IN      13   //Input pin for (SSC32 TX) on BotBoard (Blue)
+    #define cSSC_OUT     12     //Output pin for (SSC32 RX) on BotBoard (Yellow)
+    #define cSSC_IN      13     //Input pin for (SSC32 TX) on BotBoard (Blue)
 #endif
 
 #ifdef __BOTBOARD_ARDUINOPROMINI__
-  #define SOUND_PIN    11   // Bot Board JR pin number (with Arduino Pro Mini plugged)
-  #define PS2_DAT      14       
-  #define PS2_CMD      15
-  #define PS2_SEL      16
-  #define PS2_CLK      17
+    #define SOUND_PIN    11     // Bot Board JR pin number (with Arduino Pro Mini plugged)
+    #define PS2_DAT      14       
+    #define PS2_CMD      15
+    #define PS2_SEL      16     // On the PS2 receiver this pin may be called ATT (attention)
+    #define PS2_CLK      17
 // If we are using a SSC-32 then:
 // If were are running on an Arduino Mega we will use one of the hardware serial port, default to Serial1 above.
 // If on Non mega, if the IO pins are set to 0, we will overload the hardware Serial port 
 // Else we will user SoftwareSerial to talk to the SSC-32
-  #define cSSC_OUT     10   //Output pin for Botboard - Input of SSC32 (Yellow)
-  #define cSSC_IN      9    //Input pin for Botboard - Output of SSC32 (Blue)
+    #define cSSC_OUT     10     //Output pin for Botboard - Input of SSC32 (Yellow)
+    #define cSSC_IN      9      //Input pin for Botboard - Output of SSC32 (Blue)
 #endif
 
 //====================================================================
@@ -131,59 +134,59 @@
 
 //--------------------------------------------------------------------
 //[MIN/MAX ANGLES]
-#define cRRCoxaMin1     -650      //Mechanical limits of the Right Rear Leg
+#define cRRCoxaMin1     -650    //Mechanical limits of the Right Rear Leg
 #define cRRCoxaMax1     650
 #define cRRFemurMin1    -1050
 #define cRRFemurMax1    750
 #define cRRTibiaMin1    -530
 #define cRRTibiaMax1    900
-#define cRRTarsMin1     -1300	//4DOF ONLY - In theory the kinematics can reach about -160 deg
-#define cRRTarsMax1	500	//4DOF ONLY - The kinematics will never exceed 23 deg though..
+#define cRRTarsMin1     -1300   //4DOF ONLY - In theory the kinematics can reach about -160 deg
+#define cRRTarsMax1     500     //4DOF ONLY - The kinematics will never exceed 23 deg though..
 
-#define cRMCoxaMin1     -650      //Mechanical limits of the Right Middle Leg
+#define cRMCoxaMin1     -650    //Mechanical limits of the Right Middle Leg
 #define cRMCoxaMax1     650
 #define cRMFemurMin1    -1050
 #define cRMFemurMax1    750
 #define cRMTibiaMin1    -530
 #define cRMTibiaMax1    900
-#define cRMTarsMin1     -1300	//4DOF ONLY - In theory the kinematics can reach about -160 deg
-#define cRMTarsMax1	500	//4DOF ONLY - The kinematics will never exceed 23 deg though..
+#define cRMTarsMin1     -1300   //4DOF ONLY - In theory the kinematics can reach about -160 deg
+#define cRMTarsMax1     500	    //4DOF ONLY - The kinematics will never exceed 23 deg though..
 
-#define cRFCoxaMin1     -650      //Mechanical limits of the Right Front Leg
+#define cRFCoxaMin1     -650    //Mechanical limits of the Right Front Leg
 #define cRFCoxaMax1     650
 #define cRFFemurMin1    -1050
 #define cRFFemurMax1    750
 #define cRFTibiaMin1    -530
 #define cRFTibiaMax1    900
-#define cRFTarsMin1     -1300	//4DOF ONLY - In theory the kinematics can reach about -160 deg
-#define cRFTarsMax1	500	//4DOF ONLY - The kinematics will never exceed 23 deg though..
+#define cRFTarsMin1     -1300   //4DOF ONLY - In theory the kinematics can reach about -160 deg
+#define cRFTarsMax1     500     //4DOF ONLY - The kinematics will never exceed 23 deg though..
 
-#define cLRCoxaMin1     -650      //Mechanical limits of the Left Rear Leg
+#define cLRCoxaMin1     -650    //Mechanical limits of the Left Rear Leg
 #define cLRCoxaMax1     650
 #define cLRFemurMin1    -1050
 #define cLRFemurMax1    750
 #define cLRTibiaMin1    -530
 #define cLRTibiaMax1    900
-#define cLRTarsMin1     -1300	//4DOF ONLY - In theory the kinematics can reach about -160 deg
-#define cLRTarsMax1	500	//4DOF ONLY - The kinematics will never exceed 23 deg though..
+#define cLRTarsMin1     -1300   //4DOF ONLY - In theory the kinematics can reach about -160 deg
+#define cLRTarsMax1     500     //4DOF ONLY - The kinematics will never exceed 23 deg though..
 
-#define cLMCoxaMin1     -650      //Mechanical limits of the Left Middle Leg
+#define cLMCoxaMin1     -650    //Mechanical limits of the Left Middle Leg
 #define cLMCoxaMax1     650
 #define cLMFemurMin1    -1050
 #define cLMFemurMax1    750
 #define cLMTibiaMin1    -530
 #define cLMTibiaMax1    900
-#define cLMTarsMin1     -1300	//4DOF ONLY - In theory the kinematics can reach about -160 deg
-#define cLMTarsMax1	500	//4DOF ONLY - The kinematics will never exceed 23 deg though..
+#define cLMTarsMin1     -1300   //4DOF ONLY - In theory the kinematics can reach about -160 deg
+#define cLMTarsMax1     500     //4DOF ONLY - The kinematics will never exceed 23 deg though..
 
-#define cLFCoxaMin1     -650      //Mechanical limits of the Left Front Leg
+#define cLFCoxaMin1     -650    //Mechanical limits of the Left Front Leg
 #define cLFCoxaMax1     650
 #define cLFFemurMin1    -1050
 #define cLFFemurMax1    750
 #define cLFTibiaMin1    -530
 #define cLFTibiaMax1    900
-#define cLFTarsMin1     -1300	//4DOF ONLY - In theory the kinematics can reach about -160 deg
-#define cLFTarsMax1	500	//4DOF ONLY - The kinematics will never exceed 23 deg though..
+#define cLFTarsMin1     -1300   //4DOF ONLY - In theory the kinematics can reach about -160 deg
+#define cLFTarsMax1     500     //4DOF ONLY - The kinematics will never exceed 23 deg though..
 
 //--------------------------------------------------------------------
 //[LEG DIMENSIONS]
@@ -227,11 +230,11 @@
 //--------------------------------------------------------------------
 //[BODY DIMENSIONS]
 #define cRRCoxaAngle1   -600    //Default Coxa setup angle, decimals = 1
-#define cRMCoxaAngle1    0      //Default Coxa setup angle, decimals = 1
-#define cRFCoxaAngle1    600    //Default Coxa setup angle, decimals = 1
-#define cLRCoxaAngle1    -600   //Default Coxa setup angle, decimals = 1
-#define cLMCoxaAngle1    0      //Default Coxa setup angle, decimals = 1
-#define cLFCoxaAngle1    600    //Default Coxa setup angle, decimals = 1
+#define cRMCoxaAngle1   0       //Default Coxa setup angle, decimals = 1
+#define cRFCoxaAngle1   600     //Default Coxa setup angle, decimals = 1
+#define cLRCoxaAngle1   -600    //Default Coxa setup angle, decimals = 1
+#define cLMCoxaAngle1   0       //Default Coxa setup angle, decimals = 1
+#define cLFCoxaAngle1	600     //Default Coxa setup angle, decimals = 1
 
 #define cRROffsetX      -69     //Distance X from center of the body to the Right Rear coxa
 #define cRROffsetZ      119     //Distance Z from center of the body to the Right Rear coxa
@@ -249,11 +252,11 @@
 
 //--------------------------------------------------------------------
 //[START POSITIONS FEET]
-// sTs - Values of 2013 are 80 - 40 - 69 - 80
-#define cHexInitXZ	    111 
-#define CHexInitXZCos60  56     // COS(60) = .5
-#define CHexInitXZSin60  96     // sin(60) = .866
-#define CHexInitY		 65     //30
+// sTs - Values of Kurt are 111 - 56 - 96 - 65
+#define cHexInitXZ	        80 
+#define CHexInitXZCos60	    40   // COS(60) = .5
+#define CHexInitXZSin60     69   // sin(60) = .866
+#define CHexInitY		    80   // 30
 
 // Lets try some multi leg positions depending on height settings.
 #define CNT_HEX_INITS 3
