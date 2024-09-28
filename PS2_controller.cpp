@@ -82,11 +82,12 @@
 #define GPPLAYERMODE      4
 
 
-#define cTravelDeadZone 4      //The deadzone for the analog input from the remote
-#define  MAXPS2ERRORCNT  5     // How many times through the loop will we go before shutting off robot?
+#define cTravelDeadZone   4     // The deadzone for the analog input from the remote
+#define MAXPS2ERRORCNT    5     // How many times through the loop will we go before shutting off robot?
 
 #ifndef MAX_BODY_Y
-#define MAX_BODY_Y 100
+#define MAX_BODY_Y   100
+#define MIN_BODY_Y   0
 #endif
 
 //=============================================================================
@@ -96,17 +97,17 @@ PS2X ps2x; // create PS2 Controller Class
 
 
 // Define an instance of the Input Controller...
-InputController  g_InputController;       // Our Input controller 
+InputController g_InputController;       // Our Input controller 
 
 
-static short      g_BodyYOffset; 
-static short      g_sPS2ErrorCnt;
-static short       g_BodyYShift;
-static byte        ControlMode;
-static bool        DoubleHeightOn;
-static bool        DoubleTravelOn;
-static bool        WalkMethod;
-byte            GPSeq;             //Number of the sequence
+static short g_BodyYOffset = 65;  // 65 = 90° leg angle
+static short g_BodyYShift;
+static short g_sPS2ErrorCnt;
+static byte ControlMode;
+static bool DoubleHeightOn;
+static bool DoubleTravelOn;
+static bool WalkMethod;
+byte GPSeq;             //Number of the sequence
 
 // some external or forward function references.
 extern void MSound(uint8_t _pin, byte cNotes, ...);
@@ -154,7 +155,9 @@ void InputController::AllowControllerInterrupts(boolean fAllow)
 //==============================================================================
 void InputController::ControlInput(void)
 {
+    /* Kurt [9/9/2012] - AdjustLegPositionsToBodyHeight
     boolean fAdjustLegPositions = false;
+	*/
     // Then try to receive a packet of information from the PS2.
     // Then try to receive a packet of information from the PS2.
     ps2x.read_gamepad();          //read controller and set large motor to spin at 'vibrate' speed
@@ -170,7 +173,9 @@ void InputController::ControlInput(void)
             } else {
                 //Turn on
                 g_InControlState.fHexOn = 1;
+				/* Kurt [9/9/2012] - AdjustLegPositionsToBodyHeight
                 fAdjustLegPositions = true;
+				*/
             }
         }
 
@@ -247,28 +252,35 @@ void InputController::ControlInput(void)
                 if (g_BodyYOffset>0) 
                     g_BodyYOffset = 0;
                 else
-                    g_BodyYOffset = 35;
+                    g_BodyYOffset = 65;  //35;
 
+                /* Kurt [9/9/2012] - AdjustLegPositionsToBodyHeight
                 fAdjustLegPositions = true;
+				*/
             }
 
             if (ps2x.ButtonPressed(PSB_PAD_UP)) { // D-Up - Button Test
-                g_BodyYOffset += 10;
+                if (g_BodyYOffset > (MAX_BODY_Y-10))
+                    g_BodyYOffset += 10;				
+				else
+                    g_BodyYOffset = MAX_BODY_Y;
 
+                /* Kurt [9/9/2012] - AdjustLegPositionsToBodyHeight
                 // And see if the legs should adjust...
                 fAdjustLegPositions = true;
-                if (g_BodyYOffset > MAX_BODY_Y)
-                    g_BodyYOffset = MAX_BODY_Y;
+				*/
             }
 
-            if (ps2x.ButtonPressed(PSB_PAD_DOWN) && g_BodyYOffset) { // D-Down - Button Test
-                if (g_BodyYOffset > 10)
+            if (ps2x.ButtonPressed(PSB_PAD_DOWN)) { // D-Down - Button Test
+                if (g_BodyYOffset > (MIN_BODY_Y+10))
                     g_BodyYOffset -= 10;
                 else
-                    g_BodyYOffset = 0;      // constrain clipped at zero.
+                    g_BodyYOffset = MIN_BODY_Y;
 
-                // And see if the legs should adjust...
+                /* Kurt [9/9/2012] - AdjustLegPositionsToBodyHeight
+				// And see if the legs should adjust...
                 fAdjustLegPositions = true;
+				*/
             }
 
             if (ps2x.ButtonPressed(PSB_PAD_RIGHT)) { // D-Right - Button Test
@@ -407,9 +419,11 @@ void InputController::ControlInput(void)
         }
 
         //Calculate g_InControlState.BodyPos.y
-        g_InControlState.BodyPos.y = min(max(g_BodyYOffset + g_BodyYShift,  0), MAX_BODY_Y);
-        if (fAdjustLegPositions)
+        g_InControlState.BodyPos.y = min(max(g_BodyYOffset + g_BodyYShift,  MIN_BODY_Y), MAX_BODY_Y);
+        /* Kurt [9/9/2012] - AdjustLegPositionsToBodyHeight
+		if (fAdjustLegPositions)
             AdjustLegPositionsToBodyHeight();    // Put main workings into main program file
+		*/
     } else {
         // We may have lost the PS2... See what we can do to recover...
         if (g_sPS2ErrorCnt < MAXPS2ERRORCNT)
@@ -440,7 +454,9 @@ void PS2TurnRobotOff(void)
     g_BodyYShift = 0;
     g_InControlState.SelectedLeg = 255;
     g_InControlState.fHexOn = 0;
-    AdjustLegPositionsToBodyHeight();    // Put main workings into main program file
+	/* Kurt [9/9/2012] - AdjustLegPositionsToBodyHeight
+    AdjustLegPositionsToBodyHeight();
+	*/
 }
 
 

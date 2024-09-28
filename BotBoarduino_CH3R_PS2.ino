@@ -22,7 +22,6 @@
 // Header Files
 //=============================================================================
 
-#define DEFINE_HEX_GLOBALS
 #if ARDUINO>99
 #include <Arduino.h>
 #else
@@ -307,7 +306,6 @@ void setup(){
     // Init our ServoDriver
     g_ServoDriver.Init();
     
-    //sTs - Latest Kurt release [9/9/2012] does not have this PS2_CMD check
     pinMode(PS2_CMD, INPUT);
     if(!digitalRead(PS2_CMD))
         g_ServoDriver.SSCForwarder();
@@ -354,7 +352,9 @@ void setup(){
     g_InControlState.GaitType = 1;  // 0; Devon wanted 
     g_InControlState.BalanceMode = 0;
     g_InControlState.LegLiftHeight = 50;
-    g_InControlState.ForceGaitStepCnt = 0;    // added to try to adjust starting positions depending on height...
+    /* Kurt [9/9/2012] - AdjustLegPositionsToBodyHeight
+    g_InControlState.ForceGaitStepCnt = 0;   // Added to try to adjust starting positions depending on height...
+    */
     GaitStep = 1;
     GaitSelect();
 
@@ -513,7 +513,7 @@ void loop(void)
         }
 
     } else {
-        //Turn the bot off - May need to add ajust here...
+        //Turn the bot off
         if (g_InControlState.fPrev_HexOn || (AllDown= 0)) {
             ServoMoveTime = 600;
             StartUpdateServos();
@@ -759,11 +759,13 @@ void GaitSelect(void)
 void GaitSeq(void)
 {
     //Check if the Gait is in motion
-    //TravelRequest = ((abs(g_InControlState.TravelLength.x)>cTravelDeadZone) || (abs(g_InControlState.TravelLength.z)>cTravelDeadZone) 
-    //      || (abs(g_InControlState.TravelLength.y)>cTravelDeadZone));   //sTs - 2013 version (when ForceGaitStepCnt was not introduced yet)
-
+    TravelRequest = ((abs(g_InControlState.TravelLength.x)>cTravelDeadZone) || (abs(g_InControlState.TravelLength.z)>cTravelDeadZone) 
+          || (abs(g_InControlState.TravelLength.y)>cTravelDeadZone));
+    
+    /* Kurt [9/9/2012] - AdjustLegPositionsToBodyHeight
     TravelRequest = (abs(g_InControlState.TravelLength.x)>cTravelDeadZone) || (abs(g_InControlState.TravelLength.z)>cTravelDeadZone) 
           || (abs(g_InControlState.TravelLength.y)>cTravelDeadZone) || (g_InControlState.ForceGaitStepCnt != 0);
+    */
     if (NrLiftedPos == 5)
         LiftDivFactor = 4;    
     else  
@@ -778,9 +780,11 @@ void GaitSeq(void)
         Gait(LegIndex);
     }    // next leg
 
+    /* Kurt [9/9/2012] - AdjustLegPositionsToBodyHeight
     // If we have a force count decrement it now... 
     if (g_InControlState.ForceGaitStepCnt)
       g_InControlState.ForceGaitStepCnt--;
+    */
 }
 
 
@@ -1349,7 +1353,7 @@ boolean TerminalMonitor(void)
         ich = 0;
         // For now assume we receive a packet of data from serial monitor, as the user has
         // to click the send button...
-        for (ich=0; ich < (int)sizeof(szCmdLine); ich++) {
+        for (ich=0; ich < sizeof(szCmdLine); ich++) {
             ch = DBGSerial.read();        // get the next character
             if ((ch == -1) || ((ch >= 10) && (ch <= 15)))
                 break;
@@ -1402,6 +1406,7 @@ short SmoothControl (short CtrlMoveInp, short CtrlMoveOut, byte CtrlDivider)
     return CtrlMoveInp;
 }
 
+/* Kurt [9/9/2012] - AdjustLegPositionsToBodyHeight
 //--------------------------------------------------------------------
 // AdjustLegPositionsToBodyHeight() - Will try to adjust the position of the legs
 //     to be appropriate for the current y location of the body...
@@ -1460,6 +1465,5 @@ void AdjustLegPositionsToBodyHeight(void)
       // Make sure we cycle through one gait to have the legs all move into their new locations...
       g_InControlState.ForceGaitStepCnt = StepsInGait;
     }
-#endif //CNT_HEX_INITS
-
 }
+*/

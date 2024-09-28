@@ -51,7 +51,6 @@ extern INCONTROLSTATE   g_InControlState;		 // State information that controller
 //-----------------------------------------------------------------------------
 extern boolean          g_fDebugOutput;
 
-//sTs - Latest Kurt release [9/9/2012] does not have everything within #if 0
 #if 0
 extern boolean		g_fHexOn;				//Switch to turn on Phoenix
 extern boolean		g_fPrev_HexOn;			//Previous loop state 
@@ -105,7 +104,9 @@ extern void	AllowControllerInterrupts(boolean fAllow);
 
 extern bool CheckVoltage(void);
 
+/* Kurt [9/9/2012] - AdjustLegPositionsToBodyHeight
 void AdjustLegPositionsToBodyHeight(void);
+*/
 
 // debug handler...
 extern boolean g_fDBGHandleError;

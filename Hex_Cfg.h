@@ -258,6 +258,7 @@
 #define CHexInitXZSin60     69   // sin(60) = .866
 #define CHexInitY		    80   // 30
 
+/* Kurt [9/9/2012] - AdjustLegPositionsToBodyHeight
 // Lets try some multi leg positions depending on height settings.
 #define CNT_HEX_INITS 3
 #define MAX_BODY_Y  90
@@ -268,6 +269,7 @@ const byte g_abHexMaxBodyY[] PROGMEM = { 20, 50, MAX_BODY_Y};
 extern const byte g_abHexIntXZ[] PROGMEM;
 extern const byte g_abHexMaxBodyY[] PROGMEM;
 #endif
+*/
 
 #define cRRInitPosX     CHexInitXZCos60      //Start positions of the Right Rear leg
 #define cRRInitPosY     CHexInitY

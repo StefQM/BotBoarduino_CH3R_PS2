@@ -296,7 +296,6 @@ void ServoDriver::FreeServos(void)
 #ifdef OPT_SSC_FORWARDER
 void  ServoDriver::SSCForwarder(void) 
 {
-    //sTs - Latest Kurt release [9/9/2012] does not have the sound+delay
     MSound(SOUND_PIN, 1, 1000, 2000);  //sound SOUND_PIN, [50\4000]
     delay(2000);
 	
@@ -304,8 +303,6 @@ void  ServoDriver::SSCForwarder(void)
     int sPrevChar = 0;
     DBGSerial.println("SSC Forwarder mode - Enter $<cr> to exit");
     
-	//sTs - Latest Kurt release [9/9/2012] has an infinite for loop
-    //for (;;) {
     while(digitalRead(PS2_CMD)) {
         if ((sChar = DBGSerial.read()) != -1) {
             SSCSerial.write(sChar & 0xff);
