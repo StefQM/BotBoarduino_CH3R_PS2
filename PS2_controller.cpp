@@ -260,7 +260,7 @@ void InputController::ControlInput(void)
             }
 
             if (ps2x.ButtonPressed(PSB_PAD_UP)) { // D-Up - Button Test
-                if (g_BodyYOffset > (MAX_BODY_Y-10))
+                if (g_BodyYOffset < (MAX_BODY_Y-10))
                     g_BodyYOffset += 10;				
 				else
                     g_BodyYOffset = MAX_BODY_Y;
