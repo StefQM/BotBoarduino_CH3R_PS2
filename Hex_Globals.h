@@ -37,7 +37,7 @@
 #define NUM_GAITS    5
 extern void GaitSelect(void);
 extern short SmoothControl (short CtrlMoveInp, short CtrlMoveOut, byte CtrlDivider);
-
+#include "Leg.h"
 
 //-----------------------------------------------------------------------------
 // Define global class objects
@@ -45,6 +45,8 @@ extern short SmoothControl (short CtrlMoveInp, short CtrlMoveOut, byte CtrlDivid
 extern ServoDriver      g_ServoDriver;           // our global servo driver class
 extern InputController  g_InputController;       // Our Input controller 
 extern INCONTROLSTATE   g_InControlState;		 // State information that controller changes
+extern Leg              g_Legs[6];               // The legs of the robot
+
 
 //-----------------------------------------------------------------------------
 // Define Global variables
