@@ -1,17 +1,7 @@
 #include "Leg.h"
 #include "Hex_Globals.h"
 
-// External declarations for tables and globals in .ino
-extern const short cOffsetX[] PROGMEM;
-extern const short cOffsetZ[] PROGMEM;
-extern const short cCoxaAngle1[] PROGMEM;
-extern const byte cCoxaLength[] PROGMEM;
-extern const byte cFemurLength[] PROGMEM;
-extern const byte cTibiaLength[] PROGMEM;
-#ifdef c4DOF
-extern const byte cTarsLength[] PROGMEM;
-#endif
-
+// External declarations for functions in .ino
 extern void GetSinCos(short AngleDeg1);
 extern long GetArcCos(short cos4);
 extern short GetATan2(short AtanX, short AtanY);
@@ -24,22 +14,25 @@ extern boolean IKSolution;
 extern boolean IKSolutionWarning;
 extern boolean IKSolutionError;
 
-extern const short cFemurHornOffset1[] PROGMEM;
-#define CFEMURHORNOFFSET1(LEGI) ((short)pgm_read_word(&cFemurHornOffset1[LEGI]))
+// Macro equivalents for LegIK
 #ifdef c4DOF
-extern const short cTarsHornOffset1[] PROGMEM;
 #define CTARSHORNOFFSET1(LEGI) ((short)pgm_read_word(&cTarsHornOffset1[LEGI]))
+#else
+#define CTARSHORNOFFSET1(LEGI) 0
 #endif
+#define CFEMURHORNOFFSET1(LEGI) ((short)pgm_read_word(&cFemurHornOffset1[LEGI]))
+
 
 void Leg::init(byte legIndex) {
     index = legIndex;
-    posX = posY = posZ = 0;
+    posX = (short)pgm_read_word(&cInitPosX[index]);
+    posY = (short)pgm_read_word(&cInitPosY[index]);
+    posZ = (short)pgm_read_word(&cInitPosZ[index]);
+    gaitPosX = gaitPosY = gaitPosZ = gaitRotY = 0;
     coxaAngle = femurAngle = tibiaAngle = 0;
 #ifdef c4DOF
     tarsAngle = 0;
 #endif
-    gaitPosX = gaitPosY = gaitPosZ = gaitRotY = 0;
-    bodyFKPosX = bodyFKPosY = bodyFKPosZ = 0;
 }
 
 void Leg::calculateBodyFK(short tx, short ty, short tz, short rotationY, 
