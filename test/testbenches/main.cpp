@@ -3,6 +3,7 @@
 #include <vector>
 #include <iomanip>
 #include "common.h"
+#include "test_utils.h"
 
 // Prototypes for functions in .ino
 void StartUpdateServos();
@@ -26,19 +27,31 @@ void robot_loop();
 // Include gait test after robot code so it sees its globals
 #include "test_gait.h"
 
-void run_ik_tests() {
-    std::cout << "Running IK Tests..." << std::endl;
-    std::ofstream csv("test/golden_data/ik_snapshot.csv");
-    csv << "TestID,Leg,IKFeetX,IKFeetY,IKFeetZ,BodyRotX,BodyRotY,BodyRotZ,CoxaAngle,FemurAngle,TibiaAngle" << std::endl;
+bool run_ik_tests() {
+    std::cout << "\n[PHASE] Starting Inverse Kinematics (IK) Regression Tests..." << std::endl;
+    
+    std::ifstream golden_file("test/golden_data/ik_snapshot.csv");
+    bool has_golden = golden_file.is_open();
+    
+    if (has_golden) {
+        std::string header;
+        std::getline(golden_file, header); // Skip header
+        std::cout << "[INFO] Comparing against Golden Master: test/golden_data/ik_snapshot.csv" << std::endl;
+    } else {
+        std::cout << "[WARN] No Golden Master found. Generating new baseline snapshot." << std::endl;
+    }
+
+    std::ofstream out_csv("test/golden_data/ik_snapshot_current.csv");
+    out_csv << "TestID,Leg,IKFeetX,IKFeetY,IKFeetZ,BodyRotX,BodyRotY,BodyRotZ,CoxaAngle,FemurAngle,TibiaAngle" << std::endl;
 
     int testId = 0;
+    int failures = 0;
+    int matches = 0;
 
-    // Restore original range of positions
     short test_coords[] = {-100, -50, 0, 50, 100};
     short test_rots[] = {-100, 0, 100};
 
     for (short rx : test_rots) {
-        std::cout << "Testing BodyRotX: " << rx << std::endl;
         for (short ry : test_rots) {
             for (short rz : test_rots) {
                 g_InControlState.BodyRot1.x = rx;
@@ -49,11 +62,8 @@ void run_ik_tests() {
                     for (short ty : test_coords) {
                         for (short tz : test_coords) {
                             testId++;
-                            std::cout << "TestID: " << testId << " rx=" << rx << " ry=" << ry << " rz=" << rz << " tx=" << tx << " ty=" << ty << " tz=" << tz << std::endl;
                             
-                            // For each leg
                             for (int leg = 0; leg < 6; ++leg) {
-                                // Reset outputs
                                 g_Legs[leg].coxaAngle = 0;
                                 g_Legs[leg].femurAngle = 0;
                                 g_Legs[leg].tibiaAngle = 0;
@@ -72,19 +82,56 @@ void run_ik_tests() {
                                                               g_Legs[leg].posZ + tz - g_Legs[leg].bodyFKPosZ);
                                 }
 
-                                csv << testId << "," << leg << "," << tx << "," << ty << "," << tz << "," 
+                                // Write current result
+                                out_csv << testId << "," << leg << "," << tx << "," << ty << "," << tz << "," 
                                     << rx << "," << ry << "," << rz << ","
                                     << g_Legs[leg].coxaAngle << "," << g_Legs[leg].femurAngle << "," << g_Legs[leg].tibiaAngle << std::endl;
+
+                                // Compare with golden if available
+                                if (has_golden) {
+                                    std::string line;
+                                    if (std::getline(golden_file, line)) {
+                                        std::vector<std::string> parts = split_csv(line);
+                                        if (parts.size() >= 11) {
+                                            short g_coxa = std::stoi(parts[8]);
+                                            short g_femur = std::stoi(parts[9]);
+                                            short g_tibia = std::stoi(parts[10]);
+
+                                            if (g_Legs[leg].coxaAngle != g_coxa || 
+                                                g_Legs[leg].femurAngle != g_femur || 
+                                                g_Legs[leg].tibiaAngle != g_tibia) {
+                                                
+                                                failures++;
+                                                if (failures < 10) { // Limit error output
+                                                    std::cout << "[FAIL] TestID " << testId << " Leg " << leg << " mismatch!" << std::endl;
+                                                    std::cout << "  Expected: Coxa=" << g_coxa << " Femur=" << g_femur << " Tibia=" << g_tibia << std::endl;
+                                                    std::cout << "  Actual:   Coxa=" << g_Legs[leg].coxaAngle << " Femur=" << g_Legs[leg].femurAngle << " Tibia=" << g_Legs[leg].tibiaAngle << std::endl;
+                                                }
+                                            } else {
+                                                matches++;
+                                            }
+                                        }
+                                    }
+                                }
                             }
-                            // if (testId % 10 == 0) std::cout << "Finished TestID: " << testId << std::endl;
                         }
                     }
                 }
             }
         }
     }
-    csv.close();
-    std::cout << "IK Tests Complete. Snapshot saved to test/golden_data/ik_snapshot.csv" << std::endl;
+    
+    out_csv.close();
+    if (has_golden) golden_file.close();
+
+    std::cout << "[RESULT] IK Tests Finished. Matches: " << matches << ", Failures: " << failures << std::endl;
+    if (has_golden && failures > 0) {
+        std::cout << "[ERROR] IK REGRESSION FAILED!" << std::endl;
+        return false;
+    } else if (has_golden) {
+        std::cout << "[SUCCESS] IK REGRESSION PASSED." << std::endl;
+    }
+    return true;
 }
 
 int main() {
@@ -93,11 +140,19 @@ int main() {
         // Basic setup
         robot_setup();
         
-        std::cout << "Starting IK Tests..." << std::endl;
-        run_ik_tests();
-        std::cout << "Starting Gait Tests..." << std::endl;
-        run_gait_tests();
-        std::cout << "All Tests Complete." << std::endl;
+        bool ik_pass = run_ik_tests();
+        bool gait_pass = run_gait_tests();
+        
+        std::cout << "\n[FINAL SUMMARY]" << std::endl;
+        std::cout << "IK Regression:   " << (ik_pass ? "PASSED" : "FAILED") << std::endl;
+        std::cout << "Gait Regression: " << (gait_pass ? "PASSED" : "FAILED") << std::endl;
+
+        if (!ik_pass || !gait_pass) {
+            std::cout << "\n[RESULT] TEST SUITE FAILED." << std::endl;
+            return 1;
+        }
+
+        std::cout << "\n[RESULT] ALL TESTS PASSED." << std::endl;
     } catch (const std::exception& e) {
         std::cerr << "Crashed with exception: " << e.what() << std::endl;
         return 1;
