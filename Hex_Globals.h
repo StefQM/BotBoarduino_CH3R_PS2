@@ -35,9 +35,12 @@
 
 
 #define NUM_GAITS    5
+#define BalanceDivFactor 6
+#define cTravelDeadZone 4
 extern void GaitSelect(void);
 extern short SmoothControl (short CtrlMoveInp, short CtrlMoveOut, byte CtrlDivider);
 #include "Leg.h"
+#include "Hexapod.h"
 
 //-----------------------------------------------------------------------------
 // Define global class objects
@@ -46,6 +49,7 @@ extern ServoDriver      g_ServoDriver;           // our global servo driver clas
 extern InputController  g_InputController;       // Our Input controller 
 extern INCONTROLSTATE   g_InControlState;		 // State information that controller changes
 extern Leg              g_Legs[6];               // The legs of the robot
+extern Hexapod          g_Hexapod;               // The hexapod coordinator class
 
 
 //-----------------------------------------------------------------------------

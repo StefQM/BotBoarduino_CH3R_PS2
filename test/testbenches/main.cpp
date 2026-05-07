@@ -70,13 +70,13 @@ bool run_ik_tests() {
 
                                 if (leg <= 2) { // Right legs
                                     g_Legs[leg].calculateBodyFK(-g_Legs[leg].posX + tx, g_Legs[leg].posZ + tz, g_Legs[leg].posY + ty, 0, 
-                                                              BodyRotOffsetX, BodyRotOffsetY, BodyRotOffsetZ, TotalXBal1, TotalYBal1, TotalZBal1);
+                                                              g_Hexapod.BodyRotOffsetX, g_Hexapod.BodyRotOffsetY, g_Hexapod.BodyRotOffsetZ, g_Hexapod.TotalXBal1, g_Hexapod.TotalYBal1, g_Hexapod.TotalZBal1);
                                     g_Legs[leg].calculateLegIK(g_Legs[leg].posX - tx + g_Legs[leg].bodyFKPosX, 
                                                               g_Legs[leg].posY + ty - g_Legs[leg].bodyFKPosY,
                                                               g_Legs[leg].posZ + tz - g_Legs[leg].bodyFKPosZ);
                                 } else { // Left legs
                                     g_Legs[leg].calculateBodyFK(g_Legs[leg].posX - tx, g_Legs[leg].posZ + tz, g_Legs[leg].posY + ty, 0,
-                                                              BodyRotOffsetX, BodyRotOffsetY, BodyRotOffsetZ, TotalXBal1, TotalYBal1, TotalZBal1);
+                                                              g_Hexapod.BodyRotOffsetX, g_Hexapod.BodyRotOffsetY, g_Hexapod.BodyRotOffsetZ, g_Hexapod.TotalXBal1, g_Hexapod.TotalYBal1, g_Hexapod.TotalZBal1);
                                     g_Legs[leg].calculateLegIK(g_Legs[leg].posX + tx - g_Legs[leg].bodyFKPosX,
                                                               g_Legs[leg].posY + ty - g_Legs[leg].bodyFKPosY,
                                                               g_Legs[leg].posZ + tz - g_Legs[leg].bodyFKPosZ);

@@ -50,7 +50,7 @@ bool run_gait_tests() {
         }
 
         // Record current
-        out_csv << cycle << "," << (int)GaitStep << "," << fWalking << "," << fContinueWalking << "," << ServoMoveTime << "," << escapedSerial;
+        out_csv << cycle << "," << (int)g_Hexapod.GaitStep << "," << g_Hexapod.fWalking << "," << g_Hexapod.fContinueWalking << "," << g_Hexapod.ServoMoveTime << "," << escapedSerial;
         std::vector<short> current_coords;
         for (int i = 0; i < 6; ++i) {
             out_csv << "," << g_Legs[i].gaitPosX << "," << g_Legs[i].gaitPosY << "," << g_Legs[i].gaitPosZ;
@@ -69,8 +69,8 @@ bool run_gait_tests() {
                     bool cycle_fail = false;
                     
                     // Check walking flags, move time, and raw serial output
-                    if (std::stoi(parts[2]) != fWalking || 
-                        std::stoi(parts[4]) != ServoMoveTime ||
+                    if (std::stoi(parts[2]) != g_Hexapod.fWalking || 
+                        std::stoi(parts[4]) != g_Hexapod.ServoMoveTime ||
                         parts[5] != escapedSerial) {
                         cycle_fail = true;
                     }
@@ -88,7 +88,7 @@ bool run_gait_tests() {
                         if (failures < 5) {
                             std::cout << "[FAIL] Cycle " << cycle << " state deviation!" << std::endl;
                             std::cout << "  Expected fWalking=" << parts[2] << " ServoMoveTime=" << parts[4] << std::endl;
-                            std::cout << "  Actual   fWalking=" << fWalking << " ServoMoveTime=" << ServoMoveTime << std::endl;
+                            std::cout << "  Actual   fWalking=" << g_Hexapod.fWalking << " ServoMoveTime=" << g_Hexapod.ServoMoveTime << std::endl;
                         }
                     } else {
                         matches++;

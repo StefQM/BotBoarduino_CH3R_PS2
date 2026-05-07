@@ -90,7 +90,6 @@
 #define SINGLELEGMODE     3
 #define GPPLAYERMODE      4
 
-#define cTravelDeadZone   4     // The deadzone for the analog input from the remote
 #define MAXPS2ERRORCNT    5     // How many times through the loop will we go before shutting off robot?
 
 #ifndef MAX_BODY_Y
