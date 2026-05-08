@@ -32,7 +32,7 @@ public:
     short TLDivFactor;
     short NrLiftedPos;
     byte LiftDivFactor;
-    boolean HalfLiftHeigth;
+    byte HalfLiftHeigth;
     boolean TravelRequest;
     byte StepsInGait;
     byte GaitStep;
