@@ -118,8 +118,7 @@ void setup(){
     DBGSerial.begin(57600);
 #endif
     g_ServoDriver.Init();
-    pinMode(PS2_CMD, INPUT);
-    if(!digitalRead(PS2_CMD)) g_ServoDriver.SSCForwarder();
+    if (g_InputController.FIsDiagnosticModeRequested()) g_ServoDriver.SSCForwarder();
     delay(10);
     
     for (LegIndex= 0; LegIndex <= 5; LegIndex++ ) {
@@ -204,7 +203,7 @@ void loop(void)
             
     if (g_InControlState.fHexOn) {
         if (!g_InControlState.fPrev_HexOn) {
-            MSound(SOUND_PIN, 3, 60, 2000, 80, 2250, 100, 2500);
+            MSound(3, 60, 2000, 80, 2250, 100, 2500);
             g_Hexapod.Eyes = 1;
         }
         
@@ -237,7 +236,7 @@ void loop(void)
             g_Hexapod.ServoMoveTime = 600;
             StartUpdateServos();
             g_ServoDriver.CommitServoDriver(g_Hexapod.ServoMoveTime);
-            MSound(SOUND_PIN, 3, 100, 2500, 80, 2250, 60, 2000);
+            MSound(3, 100, 2500, 80, 2250, 60, 2000);
             delay(600);
         } else {
             g_ServoDriver.FreeServos();
@@ -318,12 +317,12 @@ void SoundNoTimer(uint8_t _pin, unsigned long duration,  unsigned int frequency)
     *pin_port &= ~(pin_mask);
 }
 
-void MSound(uint8_t _pin, byte cNotes, ...) {
+void MSound(byte cNotes, ...) {
     va_list ap; va_start(ap, cNotes);
     while (cNotes > 0) {
         unsigned int duration = va_arg(ap, unsigned int);
         unsigned int frequency = va_arg(ap, unsigned int);
-        SoundNoTimer(_pin, duration, frequency);
+        SoundNoTimer(SOUND_PIN, duration, frequency);
         cNotes--;
     }
     va_end(ap);

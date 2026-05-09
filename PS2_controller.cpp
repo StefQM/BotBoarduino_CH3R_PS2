@@ -115,7 +115,7 @@ static bool WalkMethod;
 byte GPSeq;             //Number of the sequence
 
 // Some external or forward function references
-extern void MSound(uint8_t _pin, byte cNotes, ...);
+extern void MSound(byte cNotes, ...);
 extern void PS2TurnRobotOff(void);
 
 //==============================================================================
@@ -155,6 +155,17 @@ void InputController::AllowControllerInterrupts(boolean fAllow)
 }
 
 //==============================================================================
+bool InputController::FIsDiagnosticModeRequested(void)
+{
+#ifdef PS2_CMD
+    pinMode(PS2_CMD, INPUT);
+    return !digitalRead(PS2_CMD);
+#else
+    return false;
+#endif
+}
+
+//==============================================================================
 // This is The main code to input function to read inputs from the PS2 and then
 //process any commands.
 //==============================================================================
@@ -189,7 +200,7 @@ void InputController::ControlInput(void)
 
             // Translate mode
             if (ps2x.ButtonPressed(PSB_L1)) {  // L1 Button Test
-                MSound(SOUND_PIN, 1, 50, 2000);  //sound SOUND_PIN, [50\4000]
+                MSound(1, 50, 2000);  //sound SOUND_PIN, [50\4000]
                 if (ControlMode != TRANSLATEMODE )
                     ControlMode = TRANSLATEMODE;
                 else {
@@ -202,7 +213,7 @@ void InputController::ControlInput(void)
 
             // Rotate mode
             if (ps2x.ButtonPressed(PSB_L2)) {  // L2 Button Test
-                MSound(SOUND_PIN, 1, 50, 2000);  //sound SOUND_PIN, [50\4000]
+                MSound(1, 50, 2000);  //sound SOUND_PIN, [50\4000]
                 if (ControlMode != ROTATEMODE)
                     ControlMode = ROTATEMODE;
                 else {
@@ -217,7 +228,7 @@ void InputController::ControlInput(void)
             if (ps2x.ButtonPressed(PSB_CIRCLE)) {  // Circle Button Test
                 if (abs(g_InControlState.TravelLength.x)<cTravelDeadZone && abs(g_InControlState.TravelLength.z)<cTravelDeadZone 
                         && abs(g_InControlState.TravelLength.y*2)<cTravelDeadZone )   {
-                    MSound(SOUND_PIN, 1, 50, 2000);  //Sound SOUND_PIN,[50\4000]
+                    MSound(1, 50, 2000);  //Sound SOUND_PIN,[50\4000]
                     if (ControlMode != SINGLELEGMODE) {
                         ControlMode = SINGLELEGMODE;
                         if (g_InControlState.SelectedLeg == 255)  //Select leg if none is selected
@@ -232,7 +243,7 @@ void InputController::ControlInput(void)
 #ifdef OPT_GPPLAYER
             // GP Player Mode X
             if (ps2x.ButtonPressed(PSB_CROSS)) {  // Cross Button Test
-                MSound(SOUND_PIN, 1, 50, 2000);  //sound SOUND_PIN, [50\4000]
+                MSound(1, 50, 2000);  //sound SOUND_PIN, [50\4000]
                 if (ControlMode != GPPLAYERMODE) {
                     ControlMode = GPPLAYERMODE;
                     GPSeq=0;
@@ -246,9 +257,9 @@ void InputController::ControlInput(void)
             if (ps2x.ButtonPressed(PSB_SQUARE)) {  // Square Button Test
                 g_InControlState.BalanceMode = !g_InControlState.BalanceMode;
                 if (g_InControlState.BalanceMode) {
-                    MSound(SOUND_PIN, 1, 250, 1500);  //sound SOUND_PIN, [250\3000]
+                    MSound(1, 250, 1500);  //sound SOUND_PIN, [250\3000]
                 } else {
-                    MSound(SOUND_PIN, 2, 100, 2000, 50, 4000);
+                    MSound(2, 100, 2000, 50, 4000);
                 }
             }
 
@@ -294,7 +305,7 @@ void InputController::ControlInput(void)
             if (ps2x.ButtonPressed(PSB_PAD_RIGHT)) {  // D-Pad Right Button Test
                 if (g_InControlState.SpeedControl>0) {
                     g_InControlState.SpeedControl = g_InControlState.SpeedControl - 50;
-                    MSound(SOUND_PIN, 1, 50, 2000);  //sound SOUND_PIN, [50\4000]
+                    MSound(1, 50, 2000);  //sound SOUND_PIN, [50\4000]
                 }
             }
 
@@ -302,7 +313,7 @@ void InputController::ControlInput(void)
             if (ps2x.ButtonPressed(PSB_PAD_LEFT)) {  // D-Pad Left Button Test
                 if (g_InControlState.SpeedControl<2000 ) {
                     g_InControlState.SpeedControl = g_InControlState.SpeedControl + 50;
-                    MSound(SOUND_PIN, 1, 50, 2000);  //sound SOUND_PIN, [50\4000]
+                    MSound(1, 50, 2000);  //sound SOUND_PIN, [50\4000]
                 }
             }
 
@@ -315,9 +326,9 @@ void InputController::ControlInput(void)
                         && abs(g_InControlState.TravelLength.y*2)<cTravelDeadZone  ) {
                     g_InControlState.GaitType = g_InControlState.GaitType+1;  // Go to the next gait
                     if (g_InControlState.GaitType<NUM_GAITS) {  // Make sure we do not exceed number of gaits
-                        MSound(SOUND_PIN, 1, 50, 2000);  //sound SOUND_PIN, [50\4000]
+                        MSound(1, 50, 2000);  //sound SOUND_PIN, [50\4000]
                     } else {
-                        MSound(SOUND_PIN, 2, 50, 2000, 50, 2250);
+                        MSound(2, 50, 2000, 50, 2250);
                         g_InControlState.GaitType = 0;
                     }
                     GaitSelect();
@@ -325,7 +336,7 @@ void InputController::ControlInput(void)
 
                 // Double leg lift height
                 if (ps2x.ButtonPressed(PSB_R1)) {  // R1 Button Test
-                    MSound(SOUND_PIN, 1, 50, 2000);  //sound SOUND_PIN, [50\4000]
+                    MSound(1, 50, 2000);  //sound SOUND_PIN, [50\4000]
                     DoubleHeightOn = !DoubleHeightOn;
                     if (DoubleHeightOn)
                         g_InControlState.LegLiftHeight = 80;
@@ -335,13 +346,13 @@ void InputController::ControlInput(void)
 
                 // Double Travel Length
                 if (ps2x.ButtonPressed(PSB_R2)) {  // R2 Button Test
-                    MSound(SOUND_PIN, 1, 50, 2000);  //sound SOUND_PIN, [50\4000]
+                    MSound(1, 50, 2000);  //sound SOUND_PIN, [50\4000]
                     DoubleTravelOn = !DoubleTravelOn;
                 }
 
                 // Switch between Walk method 1 && Walk method 2
                 if (ps2x.ButtonPressed(PSB_R3)) {  // R3 Button Test
-                    MSound(SOUND_PIN, 1, 50, 2000);  //sound SOUND_PIN, [50\4000]
+                    MSound(1, 50, 2000);  //sound SOUND_PIN, [50\4000]
                     WalkMethod = !WalkMethod;
                 }
 
@@ -385,7 +396,7 @@ void InputController::ControlInput(void)
             if (ControlMode == SINGLELEGMODE) {
                 // Switch leg for single leg control
                 if (ps2x.ButtonPressed(PSB_SELECT)) {  // Select Button Test
-                    MSound(SOUND_PIN, 1, 50, 2000);  //sound SOUND_PIN, [50\4000]
+                    MSound(1, 50, 2000);  //sound SOUND_PIN, [50\4000]
                     if (g_InControlState.SelectedLeg<5)
                         g_InControlState.SelectedLeg = g_InControlState.SelectedLeg+1;
                     else
@@ -398,7 +409,7 @@ void InputController::ControlInput(void)
 
                 // Hold single leg in place
                 if (ps2x.ButtonPressed(PSB_R2)) {  // R2 Button Test
-                    MSound(SOUND_PIN, 1, 50, 2000);  //sound SOUND_PIN, [50\4000]
+                    MSound(1, 50, 2000);  //sound SOUND_PIN, [50\4000]
                     g_InControlState.fSLHold = !g_InControlState.fSLHold;
                 }
             }
@@ -410,10 +421,10 @@ void InputController::ControlInput(void)
                 if (ps2x.ButtonPressed(PSB_SELECT)) {  // Select Button Test
                     if (!g_ServoDriver.FIsGPSeqActive() ) {
                         if (GPSeq < 5) {  //Max sequence
-                            MSound(SOUND_PIN, 1, 50, 1500);  //sound SOUND_PIN, [50\3000]
+                            MSound(1, 50, 1500);  //sound SOUND_PIN, [50\3000]
                             GPSeq = GPSeq+1;
                         } else {
-                            MSound(SOUND_PIN, 2, 50, 2000, 50, 2250);  //sound SOUND_PIN, [50\4000, 50\4500]
+                            MSound(2, 50, 2000, 50, 2250);  //sound SOUND_PIN, [50\4000, 50\4500]
                             GPSeq=0;
                         }
                     }

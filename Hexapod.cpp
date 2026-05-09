@@ -214,7 +214,7 @@ bool Hexapod::CheckVoltage() {
     } else if ((Voltage > cTurnOnVol) && (Voltage < 1999)) {
             fLowVoltageShutdown = 0;
     } else {
-        if (s_bLVBeepCnt < 5) { s_bLVBeepCnt++; MSound(SOUND_PIN, 1, 45, 2000); }
+        if (s_bLVBeepCnt < 5) { s_bLVBeepCnt++; MSound(1, 45, 2000); }
         delay(2000);
     }
 #endif	

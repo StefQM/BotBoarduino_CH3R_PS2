@@ -26,6 +26,8 @@ void robot_loop();
 
 // Include gait test after robot code so it sees its globals
 #include "test_gait.h"
+#include "test_input.h"
+#include "test_servo.h"
 
 bool run_ik_tests() {
     std::cout << "\n[PHASE] Starting Inverse Kinematics (IK) Regression Tests..." << std::endl;
@@ -141,12 +143,16 @@ int main() {
         
         bool ik_pass = run_ik_tests();
         bool gait_pass = run_gait_tests();
+        bool input_pass = run_input_tests();
+        bool servo_pass = run_servo_tests();
         
         std::cout << "\n[FINAL SUMMARY]" << std::endl;
-        std::cout << "IK Regression:   " << (ik_pass ? "PASSED" : "FAILED") << std::endl;
-        std::cout << "Gait Regression: " << (gait_pass ? "PASSED" : "FAILED") << std::endl;
+        std::cout << "IK Regression:    " << (ik_pass ? "PASSED" : "FAILED") << std::endl;
+        std::cout << "Gait Regression:  " << (gait_pass ? "PASSED" : "FAILED") << std::endl;
+        std::cout << "Input Regression: " << (input_pass ? "PASSED" : "FAILED") << std::endl;
+        std::cout << "Servo Regression: " << (servo_pass ? "PASSED" : "FAILED") << std::endl;
 
-        if (!ik_pass || !gait_pass) {
+        if (!ik_pass || !gait_pass || !input_pass || !servo_pass) {
             std::cout << "\n[RESULT] TEST SUITE FAILED." << std::endl;
             return 1;
         }

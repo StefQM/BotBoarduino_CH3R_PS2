@@ -47,6 +47,12 @@ SoftwareSerial SSCSerial(cSSC_IN, cSSC_OUT);
 // definition of some helper functions
 extern int SSCRead (byte* pb, int cb, word wTimeout, word wEOL);
 
+#ifdef OPT_GPPLAYER
+static boolean _fGPEnabled;     // IS GP defined for this servo driver?
+static boolean _fGPActive;      // Is a sequence currently active
+static uint8_t _iSeq;           // current sequence we are running
+#endif
+
 
 //--------------------------------------------------------------------
 //Init
@@ -85,7 +91,7 @@ void ServoDriver::Init(void) {
     if ((cbRead > 3) && (abVer[cbRead-3]=='G') && (abVer[cbRead-2]=='P') && (abVer[cbRead-1]==13))
         _fGPEnabled = true;  // starts off assuming that it is not enabled...
     else
-        MSound (SOUND_PIN, 2, 40, 2500, 40, 2500);
+        MSound(2, 40, 2500, 40, 2500);
 #endif
 }
 
@@ -93,6 +99,14 @@ void ServoDriver::Init(void) {
 //[GP PLAYER]
 //--------------------------------------------------------------------
 #ifdef OPT_GPPLAYER
+
+boolean ServoDriver::FIsGPEnabled(void) {
+    return _fGPEnabled;
+}
+
+boolean ServoDriver::FIsGPSeqActive(void) {
+    return _fGPActive;
+}
 
 //--------------------------------------------------------------------
 //[FIsGPSeqDefined]
@@ -296,7 +310,7 @@ void ServoDriver::FreeServos(void)
 #ifdef OPT_SSC_FORWARDER
 void  ServoDriver::SSCForwarder(void) 
 {
-    MSound(SOUND_PIN, 1, 1000, 2000);  //sound SOUND_PIN, [50\4000]
+    MSound(1, 1000, 2000);  //sound SOUND_PIN, [50\4000]
     delay(2000);
 	
     int sChar;
