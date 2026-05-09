@@ -1,0 +1,4 @@
+# Compiled test artifacts
+*.o
+*.exe
+test/build/

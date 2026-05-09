@@ -112,7 +112,6 @@ static byte ControlMode;
 static bool DoubleHeightOn;
 static bool DoubleTravelOn;
 static bool WalkMethod;
-byte GPSeq;             //Number of the sequence
 
 // Some external or forward function references
 extern void MSound(byte cNotes, ...);
@@ -171,6 +170,7 @@ bool InputController::FIsDiagnosticModeRequested(void)
 //==============================================================================
 void InputController::ControlInput(void)
 {
+    static byte GPSeq = 0;
     /* Kurt [9/9/2012] - AdjustLegPositionsToBodyHeight
     boolean fAdjustLegPositions = false;
     */
