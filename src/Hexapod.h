@@ -11,7 +11,7 @@
 #include "InputController.h"
 
 // --- Math Tables (Defined in .ino) ---
-extern const byte GetACos[] PROGMEM;
+extern const uint8_t GetACos[] PROGMEM;
 extern const word GetSin[] PROGMEM;
 
 class Hexapod {
@@ -19,7 +19,7 @@ public:
     // --- Timing ---
     unsigned long lTimerStart;
     unsigned long lTimerEnd;
-    byte CycleTime;
+    uint8_t CycleTime;
     word ServoMoveTime;
     word PrevServoMoveTime;
 
@@ -31,18 +31,18 @@ public:
     short NomGaitSpeed;
     short TLDivFactor;
     short NrLiftedPos;
-    byte LiftDivFactor;
-    byte HalfLiftHeigth;
-    boolean TravelRequest;
-    byte StepsInGait;
-    byte GaitStep;
-    byte GaitLegNr[6];
-    boolean LastLeg;
+    uint8_t LiftDivFactor;
+    uint8_t HalfLiftHeigth;
+    bool TravelRequest;
+    uint8_t StepsInGait;
+    uint8_t GaitStep;
+    uint8_t GaitLegNr[6];
+    bool LastLeg;
 
     // --- IK/FK State ---
-    boolean IKSolution;
-    boolean IKSolutionWarning;
-    boolean IKSolutionError;
+    bool IKSolution;
+    bool IKSolutionWarning;
+    bool IKSolutionError;
     short BodyRotOffsetX, BodyRotOffsetY, BodyRotOffsetZ;
 
     // --- Math Buffers (Moved from globals) ---
@@ -53,15 +53,15 @@ public:
     short XYhyp2;
 
     // --- Status ---
-    boolean fWalking;
-    boolean fContinueWalking;
-    boolean fLowVoltageShutdown;
+    bool fWalking;
+    bool fContinueWalking;
+    bool fLowVoltageShutdown;
     word Voltage;
-    byte Eyes, LedA, LedB, LedC;
+    uint8_t Eyes, LedA, LedB, LedC;
 
     // --- Single Leg Control ---
-    byte PrevSelectedLeg;
-    boolean AllDown;
+    uint8_t PrevSelectedLeg;
+    bool AllDown;
 
     Hexapod();
     void init();
@@ -69,9 +69,9 @@ public:
     // --- Logic ---
     void GaitSelect();
     void GaitSeq();
-    void Gait(byte legIndex);
+    void Gait(uint8_t legIndex);
     void BalanceBody();
-    void BalCalcOneLeg(short PosX, short PosZ, short PosY, byte BalLegNr);
+    void BalCalcOneLeg(short PosX, short PosZ, short PosY, uint8_t BalLegNr);
     void CheckAngles();
     bool CheckVoltage();
     

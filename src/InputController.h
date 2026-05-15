@@ -16,7 +16,7 @@ public:
     void ControlInput(void);
     
     // Manage hardware-specific interrupts (if applicable)
-    void AllowControllerInterrupts(boolean fAllow);
+    void AllowControllerInterrupts(bool fAllow);
 
     // Check if a hardware diagnostic mode (like SSC Forwarder) is requested at boot
     bool FIsDiagnosticModeRequested(void);

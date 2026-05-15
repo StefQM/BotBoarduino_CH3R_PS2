@@ -108,13 +108,12 @@ InputController g_InputController;  // our input controller
 static short g_BodyYOffset = 65;  // 65 = 90 degrees leg angle
 static short g_BodyYShift;
 static short g_sPS2ErrorCnt;
-static byte ControlMode;
+static uint8_t ControlMode;
 static bool DoubleHeightOn;
 static bool DoubleTravelOn;
 static bool WalkMethod;
 
 // Some external or forward function references
-extern void MSound(byte cNotes, ...);
 extern void PS2TurnRobotOff(void);
 
 //==============================================================================
@@ -148,7 +147,7 @@ void InputController::Init(void)
 // do a lot of bit-bang outputs and it would like us to minimize any interrupts
 // that we do while it is active...
 //==============================================================================
-void InputController::AllowControllerInterrupts(boolean fAllow)
+void InputController::AllowControllerInterrupts(bool fAllow)
 {
     // We don't need to do anything...
 }
@@ -170,9 +169,9 @@ bool InputController::FIsDiagnosticModeRequested(void)
 //==============================================================================
 void InputController::ControlInput(void)
 {
-    static byte GPSeq = 0;
+    static uint8_t GPSeq = 0;
     /* Kurt [9/9/2012] - AdjustLegPositionsToBodyHeight
-    boolean fAdjustLegPositions = false;
+    bool fAdjustLegPositions = false;
     */
     // Then try to receive a packet of information from the PS2.
     ps2x.read_gamepad();  //read controller and set large motor to spin at 'vibrate' speed

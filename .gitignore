@@ -2,3 +2,17 @@
 *.o
 *.exe
 test/build/
+
+# PlatformIO
+.pio/
+.pioenvs/
+.piolibdeps/
+*.icloud
+
+# VSCode (optional - some prefer to keep these, but they can contain machine-specific paths)
+# .vscode/
+
+# Project temporary files
+*.bak
+*.tmp
+*.swp

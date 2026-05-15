@@ -35,8 +35,8 @@
 
 // Forward declarations/externs for functions defined in .ino
 extern void GaitSelect(void);
-extern short SmoothControl (short CtrlMoveInp, short CtrlMoveOut, byte CtrlDivider);
-extern void MSound(byte cNotes, ...);
+extern short SmoothControl (short CtrlMoveInp, short CtrlMoveOut, uint8_t CtrlDivider);
+extern void MSound(uint8_t cNotes, ...);
 extern bool CheckVoltage(void);
 
 #include "Leg.h"
@@ -54,12 +54,6 @@ extern Hexapod          g_Hexapod;          // The robot-wide coordinator
 //-----------------------------------------------------------------------------
 // Global variables
 //-----------------------------------------------------------------------------
-extern boolean          g_fDebugOutput;
-
-#ifdef __AVR__
-#if not defined(UBRR1H)
-extern SoftwareSerial SSCSerial;
-#endif
-#endif
+extern bool          g_fDebugOutput;
 
 #endif // _HEX_GLOBALS_H_

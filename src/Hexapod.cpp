@@ -84,13 +84,13 @@ void Hexapod::GaitSeq(void)
     else LiftDivFactor = 2;
 
     LastLeg = 0;
-    for (byte i = 0; i <= 5; i++) {
+    for (uint8_t i = 0; i <= 5; i++) {
         if (i == 5) LastLeg = 1;
         Gait(i);
     }
 }
 
-void Hexapod::Gait (byte GaitCurrentLegNr)
+void Hexapod::Gait (uint8_t GaitCurrentLegNr)
 {
     if (!TravelRequest) {    
         g_InControlState.TravelLength.x=0;
@@ -150,7 +150,7 @@ void Hexapod::Gait (byte GaitCurrentLegNr)
     }
 }  
 
-void Hexapod::BalCalcOneLeg (short PosX, short PosZ, short PosY, byte BalLegNr)
+void Hexapod::BalCalcOneLeg (short PosX, short PosZ, short PosY, uint8_t BalLegNr)
 {
     short CPR_X, CPR_Y, CPR_Z;
     long lAtan;
@@ -183,12 +183,12 @@ void Hexapod::BalanceBody(void)
 
 void Hexapod::CheckAngles(void)
 {
-    for (byte i = 0; i <=5; i++) {
+    for (uint8_t i = 0; i <=5; i++) {
         g_Legs[i].coxaAngle  = min(max(g_Legs[i].coxaAngle, (short)pgm_read_word(&cCoxaMin1[i])), (short)pgm_read_word(&cCoxaMax1[i]));
         g_Legs[i].femurAngle = min(max(g_Legs[i].femurAngle, (short)pgm_read_word(&cFemurMin1[i])), (short)pgm_read_word(&cFemurMax1[i]));
         g_Legs[i].tibiaAngle = min(max(g_Legs[i].tibiaAngle, (short)pgm_read_word(&cTibiaMin1[i])), (short)pgm_read_word(&cTibiaMax1[i]));
 #ifdef c4DOF
-        if ((byte)pgm_read_byte(&cTarsLength[i])) {
+        if ((uint8_t)pgm_read_byte(&cTarsLength[i])) {
             g_Legs[i].tarsAngle = min(max(g_Legs[i].tarsAngle, (short)pgm_read_word(&cTarsMin1[i])), (short)pgm_read_word(&cTarsMax1[i]));
         }
 #endif
@@ -200,7 +200,7 @@ bool Hexapod::CheckVoltage() {
 #ifdef cTurnOffVol
     Voltage = analogRead(cVoltagePin); 
     Voltage = ((long)Voltage*1955)/1000;
-    static byte s_bLVBeepCnt = 0;
+    static uint8_t s_bLVBeepCnt = 0;
     if (!fLowVoltageShutdown) {
         if ((Voltage < cTurnOffVol) || (Voltage >= 1999)) {
 	    g_InControlState.BodyPos.x = g_InControlState.BodyPos.y = g_InControlState.BodyPos.z = 0;
@@ -242,12 +242,12 @@ void Hexapod::GetSinCos(short AngleDeg1) {
 }
 
 long Hexapod::GetArcCos(short cos4_in) {
-    boolean NegativeValue = (cos4_in < 0);
+    bool NegativeValue = (cos4_in < 0);
     if (NegativeValue) cos4_in = -cos4_in;
     cos4_in = min(cos4_in, (short)c4DEC);
-    if ((cos4_in>=0) && (cos4_in<9000)) AngleRad4 = ((long)(byte)pgm_read_byte(&GetACos[cos4_in/79])*616)/c1DEC;
-    else if ((cos4_in>=9000) && (cos4_in<9900)) AngleRad4 = ((long)(byte)pgm_read_byte(&GetACos[(cos4_in-9000)/8+114])*616)/c1DEC;
-    else if ((cos4_in>=9900) && (cos4_in<=10000)) AngleRad4 = ((long)(byte)pgm_read_byte(&GetACos[(cos4_in-9900)/2+227])*616)/c1DEC;
+    if ((cos4_in>=0) && (cos4_in<9000)) AngleRad4 = ((long)(uint8_t)pgm_read_byte(&GetACos[cos4_in/79])*616)/c1DEC;
+    else if ((cos4_in>=9000) && (cos4_in<9900)) AngleRad4 = ((long)(uint8_t)pgm_read_byte(&GetACos[(cos4_in-9000)/8+114])*616)/c1DEC;
+    else if ((cos4_in>=9900) && (cos4_in<=10000)) AngleRad4 = ((long)(uint8_t)pgm_read_byte(&GetACos[(cos4_in-9900)/2+227])*616)/c1DEC;
     if (NegativeValue) AngleRad4 = 31416 - AngleRad4;
     return AngleRad4;
 }

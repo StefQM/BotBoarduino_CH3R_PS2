@@ -14,9 +14,9 @@
 extern const short cOffsetX[] PROGMEM;
 extern const short cOffsetZ[] PROGMEM;
 extern const short cCoxaAngle1[] PROGMEM;
-extern const byte cCoxaLength[] PROGMEM;
-extern const byte cFemurLength[] PROGMEM;
-extern const byte cTibiaLength[] PROGMEM;
+extern const uint8_t cCoxaLength[] PROGMEM;
+extern const uint8_t cFemurLength[] PROGMEM;
+extern const uint8_t cTibiaLength[] PROGMEM;
 extern const short cInitPosX[] PROGMEM;
 extern const short cInitPosY[] PROGMEM;
 extern const short cInitPosZ[] PROGMEM;
@@ -29,7 +29,7 @@ extern const short cTibiaMax1[] PROGMEM;
 extern const short cFemurHornOffset1[] PROGMEM;
 
 #ifdef c4DOF
-extern const byte cTarsLength[] PROGMEM;
+extern const uint8_t cTarsLength[] PROGMEM;
 extern const short cTarsMin1[] PROGMEM;
 extern const short cTarsMax1[] PROGMEM;
 extern const short cTarsHornOffset1[] PROGMEM;
@@ -47,11 +47,11 @@ public:
     short gaitPosX, gaitPosY, gaitPosZ, gaitRotY;
     long bodyFKPosX, bodyFKPosY, bodyFKPosZ;
 
-    byte index;
+    uint8_t index;
 
     // --- Methods ---
     Leg() {}
-    void init(byte legIndex);
+    void init(uint8_t legIndex);
     
     void calculateBodyFK(short tx, short ty, short tz, short rotationY, 
                         short bodyRotOffsetX, short bodyRotOffsetY, short bodyRotOffsetZ,

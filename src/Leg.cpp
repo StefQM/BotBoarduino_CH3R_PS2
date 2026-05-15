@@ -10,7 +10,7 @@
 #define CFEMURHORNOFFSET1(LEGI) ((short)pgm_read_word(&cFemurHornOffset1[LEGI]))
 
 
-void Leg::init(byte legIndex) {
+void Leg::init(uint8_t legIndex) {
     index = legIndex;
     posX = (short)pgm_read_word(&cInitPosX[index]);
     posY = (short)pgm_read_word(&cInitPosY[index]);
@@ -67,7 +67,7 @@ void Leg::calculateLegIK(short IKFeetPosX, short IKFeetPosY, short IKFeetPosZ) {
     IKFeetPosXZ = g_Hexapod.XYhyp2/c2DEC;
 
 #ifdef c4DOF
-    if ((byte)pgm_read_byte(&cTarsLength[index])) {
+    if ((uint8_t)pgm_read_byte(&cTarsLength[index])) {
         TarsToGroundAngle1 = -cTarsConst + cTarsMulti*IKFeetPosY + ((long)(IKFeetPosXZ*cTarsFactorA))/c1DEC - ((long)(IKFeetPosXZ*IKFeetPosY)/(cTarsFactorB));
         if (IKFeetPosY < 0) TarsToGroundAngle1 -= ((long)(IKFeetPosY*cTarsFactorC)/c1DEC);
         TGA_B_H3 = (TarsToGroundAngle1 > 400) ? 200 + (TarsToGroundAngle1/2) : TarsToGroundAngle1;
@@ -76,26 +76,26 @@ void Leg::calculateLegIK(short IKFeetPosX, short IKFeetPosY, short IKFeetPosZ) {
         else if (IKFeetPosY > -10) TarsToGroundAngle1 = (TGA_A_H4 -(((long)IKFeetPosY*(TGA_B_H3-TGA_A_H4))/c1DEC));
         else TarsToGroundAngle1 = TGA_B_H3;
         g_Hexapod.GetSinCos(TarsToGroundAngle1);
-        TarsOffsetXZ = ((long)g_Hexapod.sin4*(byte)pgm_read_byte(&cTarsLength[index]))/c4DEC;
-        TarsOffsetY = ((long)g_Hexapod.cos4*(byte)pgm_read_byte(&cTarsLength[index]))/c4DEC;
+        TarsOffsetXZ = ((long)g_Hexapod.sin4*(uint8_t)pgm_read_byte(&cTarsLength[index]))/c4DEC;
+        TarsOffsetY = ((long)g_Hexapod.cos4*(uint8_t)pgm_read_byte(&cTarsLength[index]))/c4DEC;
     } else { TarsOffsetXZ = 0; TarsOffsetY = 0; }
 #endif
 
-    IKA14 = g_Hexapod.GetATan2 (IKFeetPosY-TarsOffsetY, IKFeetPosXZ-(byte)pgm_read_byte(&cCoxaLength[index])-TarsOffsetXZ);
+    IKA14 = g_Hexapod.GetATan2 (IKFeetPosY-TarsOffsetY, IKFeetPosXZ-(uint8_t)pgm_read_byte(&cCoxaLength[index])-TarsOffsetXZ);
     IKSW2 = g_Hexapod.XYhyp2;
-    Temp1 = ((((long)(byte)pgm_read_byte(&cFemurLength[index])*(byte)pgm_read_byte(&cFemurLength[index])) - ((long)(byte)pgm_read_byte(&cTibiaLength[index])*(byte)pgm_read_byte(&cTibiaLength[index])))*c4DEC + ((long)IKSW2*IKSW2));
-    Temp2 = (long)(2*(byte)pgm_read_byte(&cFemurLength[index]))*c2DEC * (unsigned long)IKSW2;
+    Temp1 = ((((long)(uint8_t)pgm_read_byte(&cFemurLength[index])*(uint8_t)pgm_read_byte(&cFemurLength[index])) - ((long)(uint8_t)pgm_read_byte(&cTibiaLength[index])*(uint8_t)pgm_read_byte(&cTibiaLength[index])))*c4DEC + ((long)IKSW2*IKSW2));
+    Temp2 = (long)(2*(uint8_t)pgm_read_byte(&cFemurLength[index]))*c2DEC * (unsigned long)IKSW2;
     T3 = Temp1 / (Temp2/c4DEC);
     IKA24 = g_Hexapod.GetArcCos (T3 );
     femurAngle = -(long)(IKA14 + IKA24) * 180 / 3141 + 900 + CFEMURHORNOFFSET1(index);
-    Temp1 = ((((long)(byte)pgm_read_byte(&cFemurLength[index])*(byte)pgm_read_byte(&cFemurLength[index])) + ((long)(byte)pgm_read_byte(&cTibiaLength[index])*(byte)pgm_read_byte(&cTibiaLength[index])))*c4DEC - ((long)IKSW2*IKSW2));
-    Temp2 = (2*(byte)pgm_read_byte(&cFemurLength[index])*(byte)pgm_read_byte(&cTibiaLength[index]));
+    Temp1 = ((((long)(uint8_t)pgm_read_byte(&cFemurLength[index])*(uint8_t)pgm_read_byte(&cFemurLength[index])) + ((long)(uint8_t)pgm_read_byte(&cTibiaLength[index])*(uint8_t)pgm_read_byte(&cTibiaLength[index])))*c4DEC - ((long)IKSW2*IKSW2));
+    Temp2 = (2*(uint8_t)pgm_read_byte(&cFemurLength[index])*(uint8_t)pgm_read_byte(&cTibiaLength[index]));
     g_Hexapod.GetArcCos (Temp1 / Temp2);
     tibiaAngle = -(900-(long)g_Hexapod.AngleRad4*180/3141);
 #ifdef c4DOF
-    if ((byte)pgm_read_byte(&cTarsLength[index])) tarsAngle = (TarsToGroundAngle1 + femurAngle - tibiaAngle) + CTARSHORNOFFSET1(index);
+    if ((uint8_t)pgm_read_byte(&cTarsLength[index])) tarsAngle = (TarsToGroundAngle1 + femurAngle - tibiaAngle) + CTARSHORNOFFSET1(index);
 #endif
-    if(IKSW2 < ((byte)pgm_read_byte(&cFemurLength[index])+(byte)pgm_read_byte(&cTibiaLength[index])-30)*c2DEC) g_Hexapod.IKSolution = 1;
-    else if(IKSW2 < ((byte)pgm_read_byte(&cFemurLength[index])+(byte)pgm_read_byte(&cTibiaLength[index]))*c2DEC) g_Hexapod.IKSolutionWarning = 1;
+    if(IKSW2 < ((uint8_t)pgm_read_byte(&cFemurLength[index])+(uint8_t)pgm_read_byte(&cTibiaLength[index])-30)*c2DEC) g_Hexapod.IKSolution = 1;
+    else if(IKSW2 < ((uint8_t)pgm_read_byte(&cFemurLength[index])+(uint8_t)pgm_read_byte(&cTibiaLength[index]))*c2DEC) g_Hexapod.IKSolutionWarning = 1;
     else g_Hexapod.IKSolutionError = 1;
 }

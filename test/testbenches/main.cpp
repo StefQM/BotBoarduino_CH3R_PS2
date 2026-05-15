@@ -22,7 +22,7 @@ void robot_setup();
 void robot_loop();
 
 // Include the actual robot code
-#include "../../BotBoarduino_CH3R_PS2.ino"
+#include "../../src/main.cpp"
 
 // Include gait test after robot code so it sees its globals
 #include "test_gait.h"

@@ -18,9 +18,9 @@ public:
 
     // --- GP Player Interface (Optional) ---
 #ifdef OPT_GPPLAYER    
-    boolean FIsGPEnabled(void);
-    boolean FIsGPSeqDefined(uint8_t iSeq);
-    boolean FIsGPSeqActive(void);
+    bool FIsGPEnabled(void);
+    bool FIsGPSeqDefined(uint8_t iSeq);
+    bool FIsGPSeqActive(void);
     void    GPStartSeq(uint8_t iSeq);
     void    GPPlayer(void);
 #endif

@@ -20,23 +20,27 @@
 #ifdef USE_SSC32
 
 //Servo Pin numbers - May be SSC-32 or actual pins on main controller, depending on configuration.
-const byte cCoxaPin[] PROGMEM = {cRRCoxaPin,  cRMCoxaPin,  cRFCoxaPin,  cLRCoxaPin,  cLMCoxaPin,  cLFCoxaPin};
-const byte cFemurPin[] PROGMEM = {cRRFemurPin, cRMFemurPin, cRFFemurPin, cLRFemurPin, cLMFemurPin, cLFFemurPin};
-const byte cTibiaPin[] PROGMEM = {cRRTibiaPin, cRMTibiaPin, cRFTibiaPin, cLRTibiaPin, cLMTibiaPin, cLFTibiaPin};
+const uint8_t cCoxaPin[] PROGMEM = {cRRCoxaPin,  cRMCoxaPin,  cRFCoxaPin,  cLRCoxaPin,  cLMCoxaPin,  cLFCoxaPin};
+const uint8_t cFemurPin[] PROGMEM = {cRRFemurPin, cRMFemurPin, cRFFemurPin, cLRFemurPin, cLMFemurPin, cLFFemurPin};
+const uint8_t cTibiaPin[] PROGMEM = {cRRTibiaPin, cRMTibiaPin, cRFTibiaPin, cLRTibiaPin, cLMTibiaPin, cLFTibiaPin};
 #ifdef c4DOF
-const byte cTarsPin[] PROGMEM = {cRRTarsPin, cRMTarsPin, cRFTarsPin, cLRTarsPin, cLMTarsPin, cLFTarsPin};
+const uint8_t cTarsPin[] PROGMEM = {cRRTarsPin, cRMTarsPin, cRFTarsPin, cLRTarsPin, cLMTarsPin, cLFTarsPin};
 #endif
 
 
 
 // Add support for running on non-mega Arduino boards as well.
-#ifdef __AVR__
-#if not defined(UBRR1H)
+#ifdef ARDUINO_ARCH_STM32
+SoftwareSerial SSCSerial(cSSC_IN, cSSC_OUT);
+#else
+#if defined(__AVR__)
+#if !defined(UBRR1H)
 #if cSSC_IN == 0
 #define SSCSerial Serial
 #else
 SoftwareSerial SSCSerial(cSSC_IN, cSSC_OUT);
 #endif    
+#endif
 #endif
 #endif
 
@@ -45,11 +49,11 @@ SoftwareSerial SSCSerial(cSSC_IN, cSSC_OUT);
 //=============================================================================
 
 // definition of some helper functions
-extern int SSCRead (byte* pb, int cb, word wTimeout, word wEOL);
+extern int SSCRead (uint8_t* pb, int cb, uint16_t wTimeout, uint16_t wEOL);
 
 #ifdef OPT_GPPLAYER
-static boolean _fGPEnabled;     // IS GP defined for this servo driver?
-static boolean _fGPActive;      // Is a sequence currently active
+static bool _fGPEnabled;     // IS GP defined for this servo driver?
+static bool _fGPActive;      // Is a sequence currently active
 static uint8_t _iSeq;           // current sequence we are running
 #endif
 
@@ -63,7 +67,7 @@ void ServoDriver::Init(void) {
     // Lets do the check for GP Enabled here...
 #ifdef OPT_GPPLAYER
     char abVer[40];        // give a nice large buffer.
-    byte cbRead;
+    uint8_t cbRead;
 
     _fGPEnabled = false;  // starts off assuming that it is not enabled...
     _fGPActive = false;
@@ -76,15 +80,15 @@ void ServoDriver::Init(void) {
 #endif    
 #endif
     SSCSerial.print("ver\r");
-    cbRead = SSCRead((byte*)abVer, sizeof(abVer), 10000, 13);
+    cbRead = SSCRead((uint8_t*)abVer, sizeof(abVer), 10000, (uint16_t)13);
 
 #ifdef DBGSerial
     DBGSerial.write("Check GP Enable: ");
     if (cbRead > 0) {
-        byte iT;
+        uint8_t iT;
         for (iT = 0; iT < cbRead; iT++)
             DBGSerial.print(abVer[iT], HEX);
-        DBGSerial.write((byte*)abVer, cbRead);
+        DBGSerial.write((uint8_t*)abVer, cbRead);
     }
     DBGSerial.print("\n\r");
 #endif        
@@ -100,18 +104,18 @@ void ServoDriver::Init(void) {
 //--------------------------------------------------------------------
 #ifdef OPT_GPPLAYER
 
-boolean ServoDriver::FIsGPEnabled(void) {
+bool ServoDriver::FIsGPEnabled(void) {
     return _fGPEnabled;
 }
 
-boolean ServoDriver::FIsGPSeqActive(void) {
+bool ServoDriver::FIsGPSeqActive(void) {
     return _fGPActive;
 }
 
 //--------------------------------------------------------------------
 //[FIsGPSeqDefined]
 //--------------------------------------------------------------------
-boolean ServoDriver::FIsGPSeqDefined(uint8_t iSeq)
+bool ServoDriver::FIsGPSeqDefined(uint8_t iSeq)
 {
     word wGPSeqPtr;
 
@@ -119,7 +123,7 @@ boolean ServoDriver::FIsGPSeqDefined(uint8_t iSeq)
     SSCSerial.print("EER -");
     SSCSerial.print(iSeq*2, DEC);
     SSCSerial.println(";2");
-    if ((SSCRead((byte*)&wGPSeqPtr, sizeof(wGPSeqPtr), 1000, 0xffff) == sizeof(wGPSeqPtr)) && (wGPSeqPtr != 0)  && (wGPSeqPtr != 0xffff)) {
+    if ((SSCRead((uint8_t*)&wGPSeqPtr, sizeof(wGPSeqPtr), 1000, (uint16_t)0xffff) == sizeof(wGPSeqPtr)) && (wGPSeqPtr != 0)  && (wGPSeqPtr != 0xffff)) {
         return true;
     }
     return false;  // nope return error
@@ -140,8 +144,8 @@ void ServoDriver::GPStartSeq(uint8_t iSeq)
 //--------------------------------------------------------------------
 void ServoDriver::GPPlayer(void)
 {
-    byte abStat[4];
-    byte cbRead;
+    uint8_t abStat[4];
+    uint8_t cbRead;
 
     // BUGBUG:: Should integrate in the newer stuff to all us to control the speed of a sequence.
     //Start sequence
@@ -157,7 +161,7 @@ void ServoDriver::GPPlayer(void)
         //Wait for GPPlayer to complete sequence    
         do {
             SSCSerial.print("QPL0\r");
-            cbRead = SSCRead((byte*)abStat, sizeof(abStat), 10000, (word)-1);  //    [GPStatSeq, GPStatFromStep, GPStatToStep, GPStatTime]
+            cbRead = SSCRead((uint8_t*)abStat, sizeof(abStat), 10000, (uint16_t)0xffff);  //    [GPStatSeq, GPStatFromStep, GPStatToStep, GPStatTime]
             delay(20);
         }
         while ((cbRead == sizeof(abStat)) && ((abStat[0]!=255) || (abStat[1]!=0) || (abStat[2]!=0) || (abStat[3]!=0)));
@@ -185,9 +189,9 @@ void ServoDriver::BeginServoUpdate(void)    // Start the update
                            // A PWM/deg factor of 10,09 give cPwmDiv = 991 and cPFConst = 592
                            // For a modified 5645 (to 180 deg travel): cPwmDiv = 1500 and cPFConst = 900.
 #ifdef c4DOF
-void ServoDriver::OutputServoInfoForLeg(byte LegIndex, short sCoxaAngle1, short sFemurAngle1, short sTibiaAngle1, short sTarsAngle1)
+void ServoDriver::OutputServoInfoForLeg(uint8_t LegIndex, short sCoxaAngle1, short sFemurAngle1, short sTibiaAngle1, short sTarsAngle1)
 #else
-void ServoDriver::OutputServoInfoForLeg(byte LegIndex, short sCoxaAngle1, short sFemurAngle1, short sTibiaAngle1)
+void ServoDriver::OutputServoInfoForLeg(uint8_t LegIndex, short sCoxaAngle1, short sFemurAngle1, short sTibiaAngle1)
 #endif    
 {        
     word    wCoxaSSCV;     // Coxa value in SSC units
@@ -226,7 +230,7 @@ void ServoDriver::OutputServoInfoForLeg(byte LegIndex, short sCoxaAngle1, short 
     SSCSerial.write(wTibiaSSCV >> 8);
     SSCSerial.write(wTibiaSSCV & 0xff);
 #ifdef c4DOF
-    if ((byte)pgm_read_byte(&cTarsLength[LegIndex])) {    // We allow mix of 3 and 4 DOF legs...
+    if ((uint8_t)pgm_read_byte(&cTarsLength[LegIndex])) {    // We allow mix of 3 and 4 DOF legs...
         SSCSerial.write(pgm_read_byte(&cTarsPin[LegIndex]) + 0x80);
         SSCSerial.write(wTarsSSCV >> 8);
         SSCSerial.write(wTarsSSCV & 0xff);
@@ -246,7 +250,7 @@ void ServoDriver::OutputServoInfoForLeg(byte LegIndex, short sCoxaAngle1, short 
     SSCSerial.print("P");
     SSCSerial.print(wTibiaSSCV, DEC);
 #ifdef c4DOF
-    if ((byte)pgm_read_byte(&cTarsLength[LegIndex])) {
+    if ((uint8_t)pgm_read_byte(&cTarsLength[LegIndex])) {
         SSCSerial.print("#");
         SSCSerial.print(pgm_read_byte(&cTarsPin[LegIndex]), DEC);
         SSCSerial.print("P");
@@ -267,7 +271,7 @@ void ServoDriver::OutputServoInfoForLeg(byte LegIndex, short sCoxaAngle1, short 
 void ServoDriver::CommitServoDriver(word wMoveTime)
 {
 #ifdef cSSC_BINARYMODE
-    byte    abOut[3];
+    uint8_t    abOut[3];
 #endif
 
     g_InputController.AllowControllerInterrupts(false);    // If on xbee on hserial tell hserial to not processess...
@@ -293,7 +297,7 @@ void ServoDriver::CommitServoDriver(word wMoveTime)
 void ServoDriver::FreeServos(void)
 {
     g_InputController.AllowControllerInterrupts(false);    // If on xbee on hserial tell hserial to not processess...
-    for (byte LegIndex = 0; LegIndex < 32; LegIndex++) {
+    for (uint8_t LegIndex = 0; LegIndex < 32; LegIndex++) {
         SSCSerial.print("#");
         SSCSerial.print(LegIndex, DEC);
         SSCSerial.print("P0");
@@ -337,12 +341,12 @@ void  ServoDriver::SSCForwarder(void)
 
 
 //==============================================================================
-// Quick and dirty helper function to read so many bytes in from the SSC with a timeout and an end of character marker...
+// Quick and dirty helper function to read so many uint8_ts in from the SSC with a timeout and an end of character marker...
 //==============================================================================
-int SSCRead (byte* pb, int cb, word wTimeout, word wEOL)
+int SSCRead (uint8_t* pb, int cb, uint16_t wTimeout, uint16_t wEOL)
 {
     int ich;
-    byte* pbIn = pb;
+    uint8_t* pbIn = pb;
     unsigned long ulTimeLastChar = micros();
     while (cb) {
         while (!SSCSerial.available()) {
@@ -352,7 +356,7 @@ int SSCRead (byte* pb, int cb, word wTimeout, word wEOL)
             }    
         }
         ich = SSCSerial.read();
-        *pb++ = (byte)ich;
+        *pb++ = (uint8_t)ich;
         cb--;
 
         if ((word)ich == wEOL)
@@ -373,20 +377,20 @@ int SSCRead (byte* pb, int cb, word wTimeout, word wEOL)
 void ServoDriver::FindServoOffsets()
 {
     // not clean but...
-    byte abSSCServoNum[NUMSERVOSPERLEG*6];           // array of servos...
+    uint8_t abSSCServoNum[NUMSERVOSPERLEG*6];           // array of servos...
     signed char asOffsets[NUMSERVOSPERLEG*6];        // we have 18 servos to find/set offsets for...
     signed char asOffsetsRead[NUMSERVOSPERLEG*6];    // array for our read in servos...
 
     static const char *apszLegs[] = {"RR","RM","RF", "LR", "LM", "LF"};  // Leg Order
     static const char *apszLJoints[] = {" Coxa", " Femur", " Tibia", " tArs"}; // which joint on the leg...
 
-    byte szTemp[5];
-    byte cbRead;
+    uint8_t szTemp[5];
+    uint8_t cbRead;
 
     int data;
     short sSN ; 			// which servo number
-    boolean fNew = true;	// is this a new servo to work with?
-    boolean fExit = false;	// when to exit
+    bool fNew = true;	// is this a new servo to work with?
+    bool fExit = false;	// when to exit
 
     if (CheckVoltage()) {
         // Voltage is low... 
@@ -413,7 +417,7 @@ void ServoDriver::FindServoOffsets()
         SSCSerial.print("R");
         SSCSerial.println(32+abSSCServoNum[sSN], DEC);
         // now read in the current value...  Maybe should use atoi...
-        cbRead = SSCRead((byte*)szTemp, sizeof(szTemp), 10000, 13);
+        cbRead = SSCRead((uint8_t*)szTemp, sizeof(szTemp), 10000, (uint16_t)13);
         if (cbRead > 0)
             asOffsetsRead[sSN] = atoi((const char *)szTemp);
 
@@ -523,7 +527,7 @@ void ServoDriver::FindServoOffsets()
 
     if ((data == 'Y') || (data == 'y')) {
         // Ok they asked for the data to be saved.  We will store the data with a 
-        // number of servos (byte)at the start, followed by a byte for a checksum...followed by our offsets array...
+        // number of servos (uint8_t)at the start, followed by a uint8_t for a checksum...followed by our offsets array...
         // Currently we store these values starting at EEPROM address 0. May later change...
         // 
 

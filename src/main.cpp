@@ -1,0 +1,334 @@
+//=============================================================================
+//Project Lynxmotion Phoenix
+//Description: Phoenix software
+//Software version: V2.0
+//Date: 29-10-2009
+//Programmer: Jeroen Janssen [aka Xan]
+//         Kurt Eckhardt(KurtE) converted to C and Arduino
+//
+// This version of the Phoenix code was ported over to the Arduino Environement
+// and is specifically configured for the Lynxmotion BotBoarduino 
+//=============================================================================
+// Header Files
+//=============================================================================
+
+#define DEFINE_HEX_GLOBALS
+#if ARDUINO>99
+#include <Arduino.h>
+#else
+#endif
+#include <PS2X_lib.h>
+#include <pins_arduino.h>
+#include <SoftwareSerial.h>
+#include "Hex_globals.h"
+#define BalanceDivFactor 6    
+
+//--------------------------------------------------------------------
+//[TABLES]
+#include "Hex_Tables.h"
+
+//--------------------------------------------------------------------
+//[GLOABAL]
+INCONTROLSTATE   g_InControlState;
+Leg              g_Legs[6];
+ServoDriver      g_ServoDriver;
+bool          g_fDebugOutput = true;
+
+// Prototypes for methods in Hexapod.cpp
+void GaitSelect() { g_Hexapod.GaitSelect(); }
+void GaitSeq() { g_Hexapod.GaitSeq(); }
+void Gait(uint8_t leg) { g_Hexapod.Gait(leg); }
+void BalanceBody() { g_Hexapod.BalanceBody(); }
+void CheckAngles() { g_Hexapod.CheckAngles(); }
+bool CheckVoltage() { return g_Hexapod.CheckVoltage(); }
+void BalCalcOneLeg(short x, short z, short y, uint8_t leg) { g_Hexapod.BalCalcOneLeg(x, z, y, leg); }
+
+// Prototypes for local functions
+void WriteOutputs();
+void SingleLegControl();
+void StartUpdateServos();
+void SoundNoTimer(uint8_t _pin, unsigned long duration, unsigned int frequency);
+#ifdef OPT_TERMINAL_MONITOR
+bool TerminalMonitor(void);
+#endif
+void AdjustLegPositionsToBodyHeight(void);
+
+void setup(){
+    g_fDebugOutput = false;
+#ifdef DBGSerial    
+    DBGSerial.begin(57600);
+#endif
+    g_ServoDriver.Init();
+    if (g_InputController.FIsDiagnosticModeRequested()) g_ServoDriver.SSCForwarder();
+    delay(10);
+    
+    for (uint8_t LegIndex= 0; LegIndex <= 5; LegIndex++ ) {
+        g_Legs[LegIndex].init(LegIndex);
+    }
+    
+    g_InControlState.SelectedLeg = 255;
+    g_Hexapod.PrevSelectedLeg = 255;
+    g_InControlState.BodyPos.x = g_InControlState.BodyPos.y = g_InControlState.BodyPos.z = 0;
+    g_InControlState.BodyRot1.x = g_InControlState.BodyRot1.y = g_InControlState.BodyRot1.z = 0;
+    g_Hexapod.BodyRotOffsetX = g_Hexapod.BodyRotOffsetY = g_Hexapod.BodyRotOffsetZ = 0;
+    
+    g_InControlState.GaitType = 1;
+    g_InControlState.BalanceMode = 0;
+    g_InControlState.LegLiftHeight = 50;
+    g_InControlState.ForceGaitStepCnt = 0;
+    g_Hexapod.GaitStep = 1;
+    GaitSelect();
+    
+    g_InputController.Init();
+    g_Hexapod.ServoMoveTime = 150;
+    g_InControlState.fHexOn = 0;
+    g_Hexapod.fLowVoltageShutdown = false;
+}
+
+void loop(void)
+{
+    g_Hexapod.lTimerStart = millis(); 
+    CheckVoltage();
+    if (!g_Hexapod.fLowVoltageShutdown) g_InputController.ControlInput();
+    WriteOutputs();
+
+#ifdef OPT_GPPLAYER
+    g_ServoDriver.GPPlayer();
+#endif
+
+    SingleLegControl();
+    GaitSeq();
+             
+    g_Hexapod.TotalTransX = g_Hexapod.TotalTransZ = g_Hexapod.TotalTransY = 0;
+    g_Hexapod.TotalXBal1 = g_Hexapod.TotalYBal1 = g_Hexapod.TotalZBal1 = 0;
+
+    if (g_InControlState.BalanceMode) {
+        for (uint8_t LegIndex = 0; LegIndex <= 2; LegIndex++) {
+            BalCalcOneLeg (-g_Legs[LegIndex].posX+g_Legs[LegIndex].gaitPosX, 
+                        g_Legs[LegIndex].posZ+g_Legs[LegIndex].gaitPosZ, 
+                        (g_Legs[LegIndex].posY-(short)pgm_read_word(&cInitPosY[LegIndex]))+g_Legs[LegIndex].gaitPosY, LegIndex);
+        }
+        for (uint8_t LegIndex = 3; LegIndex <= 5; LegIndex++) {
+            BalCalcOneLeg(g_Legs[LegIndex].posX+g_Legs[LegIndex].gaitPosX, 
+                        g_Legs[LegIndex].posZ+g_Legs[LegIndex].gaitPosZ, 
+                        (g_Legs[LegIndex].posY-(short)pgm_read_word(&cInitPosY[LegIndex]))+g_Legs[LegIndex].gaitPosY, LegIndex);
+        }
+        BalanceBody();
+    }
+          
+     g_Hexapod.IKSolution = g_Hexapod.IKSolutionWarning = g_Hexapod.IKSolutionError = 0;
+            
+     for (uint8_t LegIndex = 0; LegIndex <= 2; LegIndex++) {    
+        g_Legs[LegIndex].calculateBodyFK(-g_Legs[LegIndex].posX+g_InControlState.BodyPos.x+g_Legs[LegIndex].gaitPosX - g_Hexapod.TotalTransX,
+                g_Legs[LegIndex].posY+g_InControlState.BodyPos.y+g_Legs[LegIndex].gaitPosY - g_Hexapod.TotalTransY,
+                g_Legs[LegIndex].posZ+g_InControlState.BodyPos.z+g_Legs[LegIndex].gaitPosZ - g_Hexapod.TotalTransZ,
+                g_Legs[LegIndex].gaitRotY, g_Hexapod.BodyRotOffsetX, g_Hexapod.BodyRotOffsetY, g_Hexapod.BodyRotOffsetZ, g_Hexapod.TotalXBal1, g_Hexapod.TotalYBal1, g_Hexapod.TotalZBal1);
+
+        g_Legs[LegIndex].calculateLegIK(g_Legs[LegIndex].posX-g_InControlState.BodyPos.x+g_Legs[LegIndex].bodyFKPosX-(g_Legs[LegIndex].gaitPosX - g_Hexapod.TotalTransX), 
+                g_Legs[LegIndex].posY+g_InControlState.BodyPos.y-g_Legs[LegIndex].bodyFKPosY+g_Legs[LegIndex].gaitPosY - g_Hexapod.TotalTransY,
+                g_Legs[LegIndex].posZ+g_InControlState.BodyPos.z-g_Legs[LegIndex].bodyFKPosZ+g_Legs[LegIndex].gaitPosZ - g_Hexapod.TotalTransZ);
+     }
+
+     for (uint8_t LegIndex = 3; LegIndex <= 5; LegIndex++) {
+        g_Legs[LegIndex].calculateBodyFK(g_Legs[LegIndex].posX-g_InControlState.BodyPos.x+g_Legs[LegIndex].gaitPosX - g_Hexapod.TotalTransX,
+                g_Legs[LegIndex].posY+g_InControlState.BodyPos.y+g_Legs[LegIndex].gaitPosY - g_Hexapod.TotalTransY,
+                g_Legs[LegIndex].posZ+g_InControlState.BodyPos.z+g_Legs[LegIndex].gaitPosZ - g_Hexapod.TotalTransZ,
+                g_Legs[LegIndex].gaitRotY, g_Hexapod.BodyRotOffsetX, g_Hexapod.BodyRotOffsetY, g_Hexapod.BodyRotOffsetZ, g_Hexapod.TotalXBal1, g_Hexapod.TotalYBal1, g_Hexapod.TotalZBal1);
+        g_Legs[LegIndex].calculateLegIK(g_Legs[LegIndex].posX+g_InControlState.BodyPos.x-g_Legs[LegIndex].bodyFKPosX+g_Legs[LegIndex].gaitPosX - g_Hexapod.TotalTransX,
+                g_Legs[LegIndex].posY+g_InControlState.BodyPos.y-g_Legs[LegIndex].bodyFKPosY+g_Legs[LegIndex].gaitPosY - g_Hexapod.TotalTransY,
+                g_Legs[LegIndex].posZ+g_InControlState.BodyPos.z-g_Legs[LegIndex].bodyFKPosZ+g_Legs[LegIndex].gaitPosZ - g_Hexapod.TotalTransZ);
+     }
+    
+    CheckAngles();
+    // g_Hexapod.LedC = g_Hexapod.IKSolutionWarning; g_Hexapod.LedA = g_Hexapod.IKSolutionError;
+            
+    if (g_InControlState.fHexOn) {
+        if (!g_InControlState.fPrev_HexOn) {
+            MSound(3, 60, 2000, 80, 2250, 100, 2500);
+            g_Hexapod.Eyes = 1;
+        }
+        
+        if ((abs(g_InControlState.TravelLength.x)>cTravelDeadZone) || (abs(g_InControlState.TravelLength.z)>cTravelDeadZone) || (abs(g_InControlState.TravelLength.y*2)>cTravelDeadZone)) {         
+            g_Hexapod.ServoMoveTime = g_Hexapod.NomGaitSpeed + (g_InControlState.InputTimeDelay*2) + g_InControlState.SpeedControl;
+            if (g_InControlState.BalanceMode) g_Hexapod.ServoMoveTime += 100;
+        } else g_Hexapod.ServoMoveTime = 200 + g_InControlState.SpeedControl;
+        
+        StartUpdateServos();
+        g_Hexapod.fContinueWalking = false;
+            
+        for (uint8_t LegIndex = 0; LegIndex <= 5; LegIndex++) {
+            if ( (abs(g_Legs[LegIndex].gaitPosX) > 2) || (abs(g_Legs[LegIndex].gaitPosY) > 2) || (abs(g_Legs[LegIndex].gaitPosZ) > 2) || (abs(g_Legs[LegIndex].gaitRotY) > 2) ) {
+                g_Hexapod.fContinueWalking = true;
+                break;
+            }
+        }
+
+        if (g_Hexapod.fWalking || g_Hexapod.fContinueWalking) {
+            g_Hexapod.fWalking = g_Hexapod.fContinueWalking;
+            g_Hexapod.lTimerEnd = millis();
+            if (g_Hexapod.lTimerEnd > g_Hexapod.lTimerStart) g_Hexapod.CycleTime = g_Hexapod.lTimerEnd-g_Hexapod.lTimerStart;
+            else g_Hexapod.CycleTime = 0xffffffffL - g_Hexapod.lTimerEnd + g_Hexapod.lTimerStart + 1;
+            delay(min(max ((int)(g_Hexapod.PrevServoMoveTime - g_Hexapod.CycleTime), 1), (int)g_Hexapod.NomGaitSpeed)); 
+        }
+        delay(20); 
+        
+    } else {
+        if (g_InControlState.fPrev_HexOn || (g_Hexapod.AllDown == 0)) {
+            g_Hexapod.ServoMoveTime = 600;
+            StartUpdateServos();
+            g_ServoDriver.CommitServoDriver(g_Hexapod.ServoMoveTime);
+            MSound(3, 100, 2500, 80, 2250, 60, 2000);
+            delay(600);
+        } else {
+            g_ServoDriver.FreeServos();
+            g_Hexapod.Eyes = 0;
+        }
+
+#ifdef OPT_TERMINAL_MONITOR  
+        TerminalMonitor();
+#endif
+        delay(20);
+    }
+
+    g_ServoDriver.CommitServoDriver(g_Hexapod.ServoMoveTime);
+    g_Hexapod.PrevServoMoveTime = g_Hexapod.ServoMoveTime;
+    g_InControlState.fPrev_HexOn = g_InControlState.fHexOn;
+}
+
+void StartUpdateServos() {        
+    g_ServoDriver.BeginServoUpdate();
+    for (uint8_t i = 0; i <= 5; i++) {
+#ifdef c4DOF
+        g_ServoDriver.OutputServoInfoForLeg(i, g_Legs[i].coxaAngle, g_Legs[i].femurAngle, g_Legs[i].tibiaAngle, g_Legs[i].tarsAngle);
+#else
+        g_ServoDriver.OutputServoInfoForLeg(i, g_Legs[i].coxaAngle, g_Legs[i].femurAngle, g_Legs[i].tibiaAngle);
+#endif      
+    }
+}
+
+void WriteOutputs() {
+#ifdef cEyesPin
+    digitalWrite(cEyesPin, g_Hexapod.Eyes);
+#endif        
+}
+
+void SingleLegControl() {
+    g_Hexapod.AllDown = true;
+    for (uint8_t LegIndex = 0; LegIndex < 6; LegIndex++) if (g_Legs[LegIndex].posY != (short)pgm_read_word(&cInitPosY[LegIndex])) g_Hexapod.AllDown = false;
+
+    if (g_InControlState.SelectedLeg <= 5) {
+        if (g_InControlState.SelectedLeg != g_Hexapod.PrevSelectedLeg) {
+            if (g_Hexapod.AllDown) {
+                g_Legs[g_InControlState.SelectedLeg].posY = (short)pgm_read_word(&cInitPosY[g_InControlState.SelectedLeg])-20;
+                g_Hexapod.PrevSelectedLeg = g_InControlState.SelectedLeg;
+            } else {
+                g_Legs[g_Hexapod.PrevSelectedLeg].posX = (short)pgm_read_word(&cInitPosX[g_Hexapod.PrevSelectedLeg]);
+                g_Legs[g_Hexapod.PrevSelectedLeg].posY = (short)pgm_read_word(&cInitPosY[g_Hexapod.PrevSelectedLeg]);
+                g_Legs[g_Hexapod.PrevSelectedLeg].posZ = (short)pgm_read_word(&cInitPosZ[g_Hexapod.PrevSelectedLeg]);
+            }
+        } else if (!g_InControlState.fSLHold) {
+            g_Legs[g_InControlState.SelectedLeg].posY += g_InControlState.SLLeg.y;
+            g_Legs[g_InControlState.SelectedLeg].posX = (short)pgm_read_word(&cInitPosX[g_InControlState.SelectedLeg])+g_InControlState.SLLeg.x;
+            g_Legs[g_InControlState.SelectedLeg].posZ = (short)pgm_read_word(&cInitPosZ[g_InControlState.SelectedLeg])+g_InControlState.SLLeg.z;
+        }
+    } else {
+        if (!g_Hexapod.AllDown) {
+            for (uint8_t LegIndex = 0; LegIndex <= 5; LegIndex++) {
+                g_Legs[LegIndex].posX = (short)pgm_read_word(&cInitPosX[LegIndex]);
+                g_Legs[LegIndex].posY = (short)pgm_read_word(&cInitPosY[LegIndex]);
+                g_Legs[LegIndex].posZ = (short)pgm_read_word(&cInitPosZ[LegIndex]);
+            }
+        }
+        g_Hexapod.PrevSelectedLeg = 255;
+    }
+}
+
+void SoundNoTimer(uint8_t _pin, unsigned long duration,  unsigned int frequency) {
+#ifdef __AVR__
+    volatile uint8_t *pin_port; uint8_t pin_mask;
+    pinMode(_pin, OUTPUT);
+    pin_port = portOutputRegister(digitalPinToPort(_pin));
+    pin_mask = digitalPinToBitMask(_pin);
+    long toggle_count = 2 * frequency * duration / 1000;
+    long lusDelayPerHalfCycle = 1000000L/(frequency * 2);
+    while (toggle_count--) { *pin_port ^= pin_mask; delayMicroseconds(lusDelayPerHalfCycle); }
+    *pin_port &= ~(pin_mask);
+#else
+    pinMode(_pin, OUTPUT);
+    long toggle_count = 2 * frequency * duration / 1000;
+    long lusDelayPerHalfCycle = 1000000L/(frequency * 2);
+    while (toggle_count--) {
+        digitalWrite(_pin, !digitalRead(_pin));
+        delayMicroseconds(lusDelayPerHalfCycle);
+    }
+    digitalWrite(_pin, LOW);
+#endif
+}
+
+void MSound(uint8_t cNotes, ...) {
+    va_list ap; va_start(ap, cNotes);
+    while (cNotes > 0) {
+        unsigned int duration = va_arg(ap, unsigned int);
+        unsigned int frequency = va_arg(ap, unsigned int);
+        SoundNoTimer(SOUND_PIN, duration, frequency);
+        cNotes--;
+    }
+    va_end(ap);
+}
+
+#ifdef OPT_TERMINAL_MONITOR
+bool TerminalMonitor(void) {
+    static bool g_fShowDebugPrompt = true;
+    uint8_t szCmdLine[5]; int ich; int ch;
+    if (g_fShowDebugPrompt) {
+        DBGSerial.println("Arduino Phoenix Monitor");
+        DBGSerial.println("D - Toggle debug on or off");
+        g_fShowDebugPrompt = false;
+    }
+    if (ich = DBGSerial.available()) {
+        ich = 0;
+        for (ich=0; ich < sizeof(szCmdLine); ich++) {
+            ch = DBGSerial.read(); if ((ch == -1) || ((ch >= 10) && (ch <= 15))) break;
+            szCmdLine[ich] = ch;
+        }
+        szCmdLine[ich] = '\0';
+        if (ich == 0) g_fShowDebugPrompt = true;
+        else if ((ich == 1) && ((szCmdLine[0] == 'd') || (szCmdLine[0] == 'D'))) {
+            g_fDebugOutput = !g_fDebugOutput;
+        }
+        return true;
+    }
+    return false;
+}
+#endif
+
+short SmoothControl (short CtrlMoveInp, short CtrlMoveOut, uint8_t CtrlDivider) {
+    if (g_Hexapod.fWalking) {
+        if (CtrlMoveOut < (CtrlMoveInp - 4)) return CtrlMoveOut + abs((CtrlMoveOut - CtrlMoveInp)/CtrlDivider);
+        else if (CtrlMoveOut > (CtrlMoveInp + 4)) return CtrlMoveOut - abs((CtrlMoveOut - CtrlMoveInp)/CtrlDivider);
+    }
+    return CtrlMoveInp;
+}
+
+uint8_t g_iLegInitIndex = 0x00;
+void AdjustLegPositionsToBodyHeight(void) {
+#ifdef CNT_HEX_INITS
+    if (g_InControlState.BodyPos.y > (short)pgm_read_byte(&g_abHexMaxBodyY[CNT_HEX_INITS-1]))
+      g_InControlState.BodyPos.y =  (short)pgm_read_byte(&g_abHexMaxBodyY[CNT_HEX_INITS-1]);
+    uint8_t i; word XZLength1;
+    for(i = 0; i < CNT_HEX_INITS; i++) {
+      if (g_InControlState.BodyPos.y <= (short)pgm_read_byte(&g_abHexMaxBodyY[i])) {
+        XZLength1 = pgm_read_byte(&g_abHexIntXZ[i]); break;
+      }
+    }
+    if (i != g_iLegInitIndex) { 
+       g_iLegInitIndex = i;
+       for (uint8_t li = 0; li <= 5; li++) {
+           g_Hexapod.GetSinCos((short)pgm_read_word(&cCoxaAngle1[li]));
+           g_Legs[li].posX = ((long)((long)g_Hexapod.cos4 * XZLength1))/c4DEC;
+           g_Legs[li].posZ = -((long)((long)g_Hexapod.sin4 * XZLength1))/c4DEC;
+       }
+       g_InControlState.ForceGaitStepCnt = g_Hexapod.StepsInGait;
+    }
+#endif
+}

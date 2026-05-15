@@ -4,9 +4,9 @@
 #include "../mocks/Arduino.h"
 #include "../mocks/SoftwareSerial.h"
 #include "../mocks/PS2X_lib.h"
-#include "../../Hex_Globals.h"
-#include "../../InputController.h"
-#include "../../ServoDriver.h"
+#include "../../src/Hex_Globals.h"
+#include "../../src/InputController.h"
+#include "../../src/ServoDriver.h"
 
 // Prevent setup/loop collision
 #define setup robot_setup

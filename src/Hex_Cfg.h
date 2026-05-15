@@ -33,7 +33,11 @@
 
 //uncomment the board you want to use
 //#define __BOTBOARDUINO__    //botboarduino board
+#ifdef __AVR__
 #define __BOTBOARD_ARDUINOPROMINI__  //arduino pro mini on botboard (originally for BasicAtomPro)
+#else
+#define __BLACKPILL_STM32F411__
+#endif
 
 //====================================================================
 #ifdef OPT_TERMINAL_MONITOR   // turning off terminal monitor will turn these off as well...
@@ -46,9 +50,13 @@
 // Which type of control(s) do you want to compile in
 #define DBGSerial         Serial
 
+#ifdef ARDUINO_ARCH_STM32
+#include <SoftwareSerial.h>
+extern SoftwareSerial SSCSerial;
+#else
 #if defined(UBRR1H)
 #define SSCSerial         Serial1
-#else
+#endif
 #endif
 
 #define USEPS2
@@ -101,6 +109,16 @@
 // Auxilary serial for NeoPixel control
     #define cNEO_OUT     13
     #define cNEO_IN      12
+#endif
+
+#ifdef __BLACKPILL_STM32F411__
+    #define SOUND_PIN    PA4
+    #define PS2_DAT      PA7
+    #define PS2_CMD      PB0
+    #define PS2_SEL      PB1
+    #define PS2_CLK      PB2
+    #define cSSC_OUT     PA3
+    #define cSSC_IN      PB4
 #endif
 
 //====================================================================
@@ -267,11 +285,11 @@
 #define CNT_HEX_INITS 3
 #define MAX_BODY_Y  90
 #ifdef DEFINE_HEX_GLOBALS
-const byte g_abHexIntXZ[] PROGMEM = {cHexInitXZ, 99, 86};
-const byte g_abHexMaxBodyY[] PROGMEM = { 20, 50, MAX_BODY_Y};
+const uint8_t g_abHexIntXZ[] PROGMEM = {cHexInitXZ, 99, 86};
+const uint8_t g_abHexMaxBodyY[] PROGMEM = { 20, 50, MAX_BODY_Y};
 #else
-extern const byte g_abHexIntXZ[] PROGMEM;
-extern const byte g_abHexMaxBodyY[] PROGMEM;
+extern const uint8_t g_abHexIntXZ[] PROGMEM;
+extern const uint8_t g_abHexMaxBodyY[] PROGMEM;
 #endif
 */
 
