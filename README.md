@@ -11,6 +11,54 @@ The codebase leverages highly optimized, 16-bit scaled integer math and `PROGMEM
 * **Input:** PS2 Wireless Controller
 * **Robot Chassis:** CH3R (Circular Hexapod 3-DOF, with optional 4-DOF support)
 
+## PS2 Controller Mapping
+
+### Common Controls (Global)
+These controls work regardless of the active mode:
+* **Start:** Turn the robot **On** (Stand up) or **Off** (Sit down and relax servos).
+* **Triangle:** Quick toggle between **Stand Up** (65mm height) and **Sit Down** (0mm height).
+* **Square:** Toggle **Balance Mode** On/Off.
+* **D-Pad Up / Down:** Manually adjust **Body Height** (incremental).
+* **D-Pad Left / Right:** Adjust **Gait Speed** (Left = Slower, Right = Faster).
+* **L1:** Enter **Translate Mode** (Shift body).
+* **L2:** Enter **Rotate Mode** (Tilt body).
+* **Circle:** Enter **Single Leg Mode**.
+* **Cross:** Enter **GP Player Mode** (Run pre-recorded sequences).
+
+### Walk Mode (Default)
+Active immediately after pressing Start.
+* **Left Stick:** Walk Forward/Back and Strafe Left/Right.
+* **Right Stick:** Rotate (Turn) Left/Right.
+* **Select:** Cycle through the **5 Gaits** (Ripple, Tripod, Triple Tripod, etc.).
+* **R1:** Toggle **Double Leg Lift Height** (robot steps higher).
+* **R2:** Toggle **Double Travel Length** (robot takes longer strides).
+* **R3 (Right Stick Click):** Toggle **Walk Method** (Swaps walk/rotate between sticks).
+
+### Translate Mode (Hold L1)
+Shifts the body's position relative to its feet.
+* **Left Stick:** Shift body X (Side-to-Side) and Z (Forward-Backward).
+* **Right Stick:** Shift body Y (Up-Down) and Rotate body Y (Yaw).
+
+### Rotate Mode (Hold L2)
+Tilts the body in place.
+* **Left Stick:** Pitch (Tilt Forward/Back) and Roll (Tilt Side-to-Side).
+* **Right Stick:** Rotate body Y (Yaw).
+
+### Single Leg Mode (Circle)
+Manually controls an individual leg.
+* **Select:** Cycle active leg (RR, RM, RF, LR, LM, LF).
+* **Left Stick:** Move the foot in X (Side-to-Side) and Z (Forward-Backward).
+* **Right Stick:** Move the foot in Y (Up-Down).
+* **R2:** **Hold/Lock** the leg in its current position.
+
+### GP Player Mode (Cross)
+Plays back sequences stored on the SSC-32.
+* **Select:** Cycle through available Sequences (0–5).
+* **R2:** **Start** the selected sequence.
+
+### Safety Fallback
+* **Connection Loss:** If the PS2 receiver loses connection for more than ~100ms, the robot will automatically execute an emergency sit-down and deactivate servos.
+
 ## Modernization & Refactoring Summary
 This project recently underwent a complete architectural overhaul to transition from a monolithic, procedural structure into a clean, modular, and safe Object-Oriented architecture, without sacrificing the strict performance requirements of the 8-bit AVR hardware.
 
