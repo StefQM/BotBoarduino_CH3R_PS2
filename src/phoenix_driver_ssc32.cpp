@@ -20,11 +20,11 @@
 #ifdef USE_SSC32
 
 //Servo Pin numbers - May be SSC-32 or actual pins on main controller, depending on configuration.
-const uint8_t cCoxaPin[] PROGMEM = {cRRCoxaPin,  cRMCoxaPin,  cRFCoxaPin,  cLRCoxaPin,  cLMCoxaPin,  cLFCoxaPin};
-const uint8_t cFemurPin[] PROGMEM = {cRRFemurPin, cRMFemurPin, cRFFemurPin, cLRFemurPin, cLMFemurPin, cLFFemurPin};
-const uint8_t cTibiaPin[] PROGMEM = {cRRTibiaPin, cRMTibiaPin, cRFTibiaPin, cLRTibiaPin, cLMTibiaPin, cLFTibiaPin};
+const uint8_t cCoxaPin[] = {cRRCoxaPin,  cRMCoxaPin,  cRFCoxaPin,  cLRCoxaPin,  cLMCoxaPin,  cLFCoxaPin};
+const uint8_t cFemurPin[] = {cRRFemurPin, cRMFemurPin, cRFFemurPin, cLRFemurPin, cLMFemurPin, cLFFemurPin};
+const uint8_t cTibiaPin[] = {cRRTibiaPin, cRMTibiaPin, cRFTibiaPin, cLRTibiaPin, cLMTibiaPin, cLFTibiaPin};
 #ifdef c4DOF
-const uint8_t cTarsPin[] PROGMEM = {cRRTarsPin, cRMTarsPin, cRFTarsPin, cLRTarsPin, cLMTarsPin, cLFTarsPin};
+const uint8_t cTarsPin[] = {cRRTarsPin, cRMTarsPin, cRFTarsPin, cLRTarsPin, cLMTarsPin, cLFTarsPin};
 #endif
 
 
@@ -218,39 +218,39 @@ void ServoDriver::OutputServoInfoForLeg(uint8_t LegIndex, short sCoxaAngle1, sho
     }
 
 #ifdef cSSC_BINARYMODE
-    SSCSerial.write(pgm_read_byte(&cCoxaPin[LegIndex])  + 0x80);
+    SSCSerial.write(cCoxaPin[LegIndex]  + 0x80);
     SSCSerial.write(wCoxaSSCV >> 8);
     SSCSerial.write(wCoxaSSCV & 0xff);
-    SSCSerial.write(pgm_read_byte(&cFemurPin[LegIndex]) + 0x80);
+    SSCSerial.write(cFemurPin[LegIndex] + 0x80);
     SSCSerial.write(wFemurSSCV >> 8);
     SSCSerial.write(wFemurSSCV & 0xff);
-    SSCSerial.write(pgm_read_byte(&cTibiaPin[LegIndex]) + 0x80);
+    SSCSerial.write(cTibiaPin[LegIndex] + 0x80);
     SSCSerial.write(wTibiaSSCV >> 8);
     SSCSerial.write(wTibiaSSCV & 0xff);
 #ifdef c4DOF
-    if ((uint8_t)pgm_read_byte(&cTarsLength[LegIndex])) {    // We allow mix of 3 and 4 DOF legs...
-        SSCSerial.write(pgm_read_byte(&cTarsPin[LegIndex]) + 0x80);
+    if ((uint8_t)cTarsLength[LegIndex]) {    // We allow mix of 3 and 4 DOF legs...
+        SSCSerial.write(cTarsPin[LegIndex] + 0x80);
         SSCSerial.write(wTarsSSCV >> 8);
         SSCSerial.write(wTarsSSCV & 0xff);
     }
 #endif
 #else
     SSCSerial.print("#");
-    SSCSerial.print(pgm_read_byte(&cCoxaPin[LegIndex]), DEC);
+    SSCSerial.print(cCoxaPin[LegIndex], DEC);
     SSCSerial.print("P");
     SSCSerial.print(wCoxaSSCV, DEC);
     SSCSerial.print("#");
-    SSCSerial.print(pgm_read_byte(&cFemurPin[LegIndex]), DEC);
+    SSCSerial.print(cFemurPin[LegIndex], DEC);
     SSCSerial.print("P");
     SSCSerial.print(wFemurSSCV, DEC);
     SSCSerial.print("#");
-    SSCSerial.print(pgm_read_byte(&cTibiaPin[LegIndex]), DEC);
+    SSCSerial.print(cTibiaPin[LegIndex], DEC);
     SSCSerial.print("P");
     SSCSerial.print(wTibiaSSCV, DEC);
 #ifdef c4DOF
-    if ((uint8_t)pgm_read_byte(&cTarsLength[LegIndex])) {
+    if ((uint8_t)cTarsLength[LegIndex]) {
         SSCSerial.print("#");
-        SSCSerial.print(pgm_read_byte(&cTarsPin[LegIndex]), DEC);
+        SSCSerial.print(cTarsPin[LegIndex], DEC);
         SSCSerial.print("P");
         SSCSerial.print(wTarsSSCV, DEC);
     }
@@ -400,11 +400,11 @@ void ServoDriver::FindServoOffsets()
 
     // Fill in array of SSC-32 servo numbers    
     for (sSN=0; sSN < 6; sSN++) {   // Make sure all of our servos initialize to 0 offset from saved.
-        abSSCServoNum[sSN*NUMSERVOSPERLEG + 0] = pgm_read_byte(&cCoxaPin[sSN]);
-        abSSCServoNum[sSN*NUMSERVOSPERLEG + 1] = pgm_read_byte(&cFemurPin[sSN]);
-        abSSCServoNum[sSN*NUMSERVOSPERLEG + 2] = pgm_read_byte(&cTibiaPin[sSN]);
+        abSSCServoNum[sSN*NUMSERVOSPERLEG + 0] = cCoxaPin[sSN];
+        abSSCServoNum[sSN*NUMSERVOSPERLEG + 1] = cFemurPin[sSN];
+        abSSCServoNum[sSN*NUMSERVOSPERLEG + 2] = cTibiaPin[sSN];
 #ifdef c4DOF
-        abSSCServoNum[sSN*NUMSERVOSPERLEG + 3] = pgm_read_byte(&cTarsPin[sSN]);
+        abSSCServoNum[sSN*NUMSERVOSPERLEG + 3] = cTarsPin[sSN];
 #endif
     }
     // now lets loop through and get information and set servos to 1500

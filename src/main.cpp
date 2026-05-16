@@ -119,12 +119,12 @@ void loop(void)
             for (uint8_t LegIndex = 0; LegIndex <= 2; LegIndex++) {
                 BalCalcOneLeg (-g_Legs[LegIndex].posX+g_Legs[LegIndex].gaitPosX, 
                             g_Legs[LegIndex].posZ+g_Legs[LegIndex].gaitPosZ, 
-                            (g_Legs[LegIndex].posY-(short)pgm_read_word(&cInitPosY[LegIndex]))+g_Legs[LegIndex].gaitPosY, LegIndex);
+                            (g_Legs[LegIndex].posY-(short)cInitPosY[LegIndex])+g_Legs[LegIndex].gaitPosY, LegIndex);
             }
             for (uint8_t LegIndex = 3; LegIndex <= 5; LegIndex++) {
                 BalCalcOneLeg(g_Legs[LegIndex].posX+g_Legs[LegIndex].gaitPosX, 
                             g_Legs[LegIndex].posZ+g_Legs[LegIndex].gaitPosZ, 
-                            (g_Legs[LegIndex].posY-(short)pgm_read_word(&cInitPosY[LegIndex]))+g_Legs[LegIndex].gaitPosY, LegIndex);
+                            (g_Legs[LegIndex].posY-(short)cInitPosY[LegIndex])+g_Legs[LegIndex].gaitPosY, LegIndex);
             }
             BalanceBody();
         }
@@ -249,29 +249,29 @@ void WriteOutputs() {
 
 void SingleLegControl() {
     g_Hexapod.AllDown = true;
-    for (uint8_t LegIndex = 0; LegIndex < 6; LegIndex++) if (g_Legs[LegIndex].posY != (short)pgm_read_word(&cInitPosY[LegIndex])) g_Hexapod.AllDown = false;
+    for (uint8_t LegIndex = 0; LegIndex < 6; LegIndex++) if (g_Legs[LegIndex].posY != (short)cInitPosY[LegIndex]) g_Hexapod.AllDown = false;
 
     if (g_InControlState.SelectedLeg <= 5) {
         if (g_InControlState.SelectedLeg != g_Hexapod.PrevSelectedLeg) {
             if (g_Hexapod.AllDown) {
-                g_Legs[g_InControlState.SelectedLeg].posY = (short)pgm_read_word(&cInitPosY[g_InControlState.SelectedLeg])-20;
+                g_Legs[g_InControlState.SelectedLeg].posY = (short)cInitPosY[g_InControlState.SelectedLeg]-20;
                 g_Hexapod.PrevSelectedLeg = g_InControlState.SelectedLeg;
             } else {
-                g_Legs[g_Hexapod.PrevSelectedLeg].posX = (short)pgm_read_word(&cInitPosX[g_Hexapod.PrevSelectedLeg]);
-                g_Legs[g_Hexapod.PrevSelectedLeg].posY = (short)pgm_read_word(&cInitPosY[g_Hexapod.PrevSelectedLeg]);
-                g_Legs[g_Hexapod.PrevSelectedLeg].posZ = (short)pgm_read_word(&cInitPosZ[g_Hexapod.PrevSelectedLeg]);
+                g_Legs[g_Hexapod.PrevSelectedLeg].posX = (short)cInitPosX[g_Hexapod.PrevSelectedLeg];
+                g_Legs[g_Hexapod.PrevSelectedLeg].posY = (short)cInitPosY[g_Hexapod.PrevSelectedLeg];
+                g_Legs[g_Hexapod.PrevSelectedLeg].posZ = (short)cInitPosZ[g_Hexapod.PrevSelectedLeg];
             }
         } else if (!g_InControlState.fSLHold) {
             g_Legs[g_InControlState.SelectedLeg].posY += g_InControlState.SLLeg.y;
-            g_Legs[g_InControlState.SelectedLeg].posX = (short)pgm_read_word(&cInitPosX[g_InControlState.SelectedLeg])+g_InControlState.SLLeg.x;
-            g_Legs[g_InControlState.SelectedLeg].posZ = (short)pgm_read_word(&cInitPosZ[g_InControlState.SelectedLeg])+g_InControlState.SLLeg.z;
+            g_Legs[g_InControlState.SelectedLeg].posX = (short)cInitPosX[g_InControlState.SelectedLeg]+g_InControlState.SLLeg.x;
+            g_Legs[g_InControlState.SelectedLeg].posZ = (short)cInitPosZ[g_InControlState.SelectedLeg]+g_InControlState.SLLeg.z;
         }
     } else {
         if (!g_Hexapod.AllDown) {
             for (uint8_t LegIndex = 0; LegIndex <= 5; LegIndex++) {
-                g_Legs[LegIndex].posX = (short)pgm_read_word(&cInitPosX[LegIndex]);
-                g_Legs[LegIndex].posY = (short)pgm_read_word(&cInitPosY[LegIndex]);
-                g_Legs[LegIndex].posZ = (short)pgm_read_word(&cInitPosZ[LegIndex]);
+                g_Legs[LegIndex].posX = (short)cInitPosX[LegIndex];
+                g_Legs[LegIndex].posY = (short)cInitPosY[LegIndex];
+                g_Legs[LegIndex].posZ = (short)cInitPosZ[LegIndex];
             }
         }
         g_Hexapod.PrevSelectedLeg = 255;
@@ -358,18 +358,18 @@ short SmoothControl (short CtrlMoveInp, short CtrlMoveOut, uint8_t CtrlDivider) 
 uint8_t g_iLegInitIndex = 0x00;
 void AdjustLegPositionsToBodyHeight(void) {
 #ifdef CNT_HEX_INITS
-    if (g_InControlState.BodyPos.y > (short)pgm_read_byte(&g_abHexMaxBodyY[CNT_HEX_INITS-1]))
-      g_InControlState.BodyPos.y =  (short)pgm_read_byte(&g_abHexMaxBodyY[CNT_HEX_INITS-1]);
+    if (g_InControlState.BodyPos.y > (short)g_abHexMaxBodyY[CNT_HEX_INITS-1])
+      g_InControlState.BodyPos.y =  (short)g_abHexMaxBodyY[CNT_HEX_INITS-1];
     uint8_t i; word XZLength1;
     for(i = 0; i < CNT_HEX_INITS; i++) {
-      if (g_InControlState.BodyPos.y <= (short)pgm_read_byte(&g_abHexMaxBodyY[i])) {
-        XZLength1 = pgm_read_byte(&g_abHexIntXZ[i]); break;
+      if (g_InControlState.BodyPos.y <= (short)g_abHexMaxBodyY[i]) {
+        XZLength1 = g_abHexIntXZ[i]; break;
       }
     }
     if (i != g_iLegInitIndex) { 
        g_iLegInitIndex = i;
        for (uint8_t li = 0; li <= 5; li++) {
-           g_Hexapod.GetSinCos((short)pgm_read_word(&cCoxaAngle1[li]));
+           g_Hexapod.GetSinCos((short)cCoxaAngle1[li]);
            g_Legs[li].posX = ((long)((long)g_Hexapod.cos4 * XZLength1))/c4DEC;
            g_Legs[li].posZ = -((long)((long)g_Hexapod.sin4 * XZLength1))/c4DEC;
        }
