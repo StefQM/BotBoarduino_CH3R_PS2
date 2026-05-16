@@ -43,6 +43,12 @@ void Hexapod::init() {
 
     PrevSelectedLeg = 255;
     AllDown = false;
+
+    lLogicTimeStart = 0;
+    lLogicTimeMax = 0;
+    lSerialTimeMax = 0;
+    lProfileWindowStart = 0;
+    fShowProfile = false;
 }
 
 void Hexapod::GaitSelect(void)

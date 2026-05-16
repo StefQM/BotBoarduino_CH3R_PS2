@@ -5,7 +5,9 @@
 #define _HEX_GLOBALS_H_
 
 #include <stdarg.h>
+#ifndef ARDUINO_ARCH_STM32
 #include <SoftwareSerial.h>
+#endif
 #include "Hex_Cfg.h"
 #include "ControlState.h"
 #include "InputController.h"

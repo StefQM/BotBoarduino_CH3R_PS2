@@ -51,8 +51,7 @@
 #define DBGSerial         Serial
 
 #ifdef ARDUINO_ARCH_STM32
-#include <SoftwareSerial.h>
-extern SoftwareSerial SSCSerial;
+#define SSCSerial         Serial2
 #else
 #if defined(UBRR1H)
 #define SSCSerial         Serial1
@@ -117,8 +116,8 @@ extern SoftwareSerial SSCSerial;
     #define PS2_CMD      PB0
     #define PS2_SEL      PB1
     #define PS2_CLK      PB2
-    #define cSSC_OUT     PA3
-    #define cSSC_IN      PB4
+    #define cSSC_OUT     PA2
+    #define cSSC_IN      PA3
 #endif
 
 //====================================================================

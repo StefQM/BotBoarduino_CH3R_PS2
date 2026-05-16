@@ -23,6 +23,13 @@ public:
     word ServoMoveTime;
     word PrevServoMoveTime;
 
+    // --- Profiling State ---
+    unsigned long lLogicTimeStart;
+    unsigned long lLogicTimeMax;
+    unsigned long lSerialTimeMax;
+    unsigned long lProfileWindowStart;
+    bool fShowProfile;
+
     // --- Balance State ---
     long TotalTransX, TotalTransY, TotalTransZ;
     long TotalXBal1, TotalYBal1, TotalZBal1;

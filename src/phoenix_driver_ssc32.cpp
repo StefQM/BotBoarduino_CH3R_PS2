@@ -30,9 +30,7 @@ const uint8_t cTarsPin[] PROGMEM = {cRRTarsPin, cRMTarsPin, cRFTarsPin, cLRTarsP
 
 
 // Add support for running on non-mega Arduino boards as well.
-#ifdef ARDUINO_ARCH_STM32
-SoftwareSerial SSCSerial(cSSC_IN, cSSC_OUT);
-#else
+#ifndef ARDUINO_ARCH_STM32
 #if defined(__AVR__)
 #if !defined(UBRR1H)
 #if cSSC_IN == 0

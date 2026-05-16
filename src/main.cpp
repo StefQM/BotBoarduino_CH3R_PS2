@@ -87,92 +87,9 @@ void setup(){
 
 void loop(void)
 {
+    g_Hexapod.lLogicTimeStart = micros();
     g_Hexapod.lTimerStart = millis(); 
-    CheckVoltage();
-    if (!g_Hexapod.fLowVoltageShutdown) g_InputController.ControlInput();
-    WriteOutputs();
-
-#ifdef OPT_GPPLAYER
-    g_ServoDriver.GPPlayer();
-#endif
-
-    SingleLegControl();
-    GaitSeq();
-             
-    g_Hexapod.TotalTransX = g_Hexapod.TotalTransZ = g_Hexapod.TotalTransY = 0;
-    g_Hexapod.TotalXBal1 = g_Hexapod.TotalYBal1 = g_Hexapod.TotalZBal1 = 0;
-
-    if (g_InControlState.BalanceMode) {
-        for (uint8_t LegIndex = 0; LegIndex <= 2; LegIndex++) {
-            BalCalcOneLeg (-g_Legs[LegIndex].posX+g_Legs[LegIndex].gaitPosX, 
-                        g_Legs[LegIndex].posZ+g_Legs[LegIndex].gaitPosZ, 
-                        (g_Legs[LegIndex].posY-(short)pgm_read_word(&cInitPosY[LegIndex]))+g_Legs[LegIndex].gaitPosY, LegIndex);
-        }
-        for (uint8_t LegIndex = 3; LegIndex <= 5; LegIndex++) {
-            BalCalcOneLeg(g_Legs[LegIndex].posX+g_Legs[LegIndex].gaitPosX, 
-                        g_Legs[LegIndex].posZ+g_Legs[LegIndex].gaitPosZ, 
-                        (g_Legs[LegIndex].posY-(short)pgm_read_word(&cInitPosY[LegIndex]))+g_Legs[LegIndex].gaitPosY, LegIndex);
-        }
-        BalanceBody();
-    }
-          
-     g_Hexapod.IKSolution = g_Hexapod.IKSolutionWarning = g_Hexapod.IKSolutionError = 0;
-            
-     for (uint8_t LegIndex = 0; LegIndex <= 2; LegIndex++) {    
-        g_Legs[LegIndex].calculateBodyFK(-g_Legs[LegIndex].posX+g_InControlState.BodyPos.x+g_Legs[LegIndex].gaitPosX - g_Hexapod.TotalTransX,
-                g_Legs[LegIndex].posY+g_InControlState.BodyPos.y+g_Legs[LegIndex].gaitPosY - g_Hexapod.TotalTransY,
-                g_Legs[LegIndex].posZ+g_InControlState.BodyPos.z+g_Legs[LegIndex].gaitPosZ - g_Hexapod.TotalTransZ,
-                g_Legs[LegIndex].gaitRotY, g_Hexapod.BodyRotOffsetX, g_Hexapod.BodyRotOffsetY, g_Hexapod.BodyRotOffsetZ, g_Hexapod.TotalXBal1, g_Hexapod.TotalYBal1, g_Hexapod.TotalZBal1);
-
-        g_Legs[LegIndex].calculateLegIK(g_Legs[LegIndex].posX-g_InControlState.BodyPos.x+g_Legs[LegIndex].bodyFKPosX-(g_Legs[LegIndex].gaitPosX - g_Hexapod.TotalTransX), 
-                g_Legs[LegIndex].posY+g_InControlState.BodyPos.y-g_Legs[LegIndex].bodyFKPosY+g_Legs[LegIndex].gaitPosY - g_Hexapod.TotalTransY,
-                g_Legs[LegIndex].posZ+g_InControlState.BodyPos.z-g_Legs[LegIndex].bodyFKPosZ+g_Legs[LegIndex].gaitPosZ - g_Hexapod.TotalTransZ);
-     }
-
-     for (uint8_t LegIndex = 3; LegIndex <= 5; LegIndex++) {
-        g_Legs[LegIndex].calculateBodyFK(g_Legs[LegIndex].posX-g_InControlState.BodyPos.x+g_Legs[LegIndex].gaitPosX - g_Hexapod.TotalTransX,
-                g_Legs[LegIndex].posY+g_InControlState.BodyPos.y+g_Legs[LegIndex].gaitPosY - g_Hexapod.TotalTransY,
-                g_Legs[LegIndex].posZ+g_InControlState.BodyPos.z+g_Legs[LegIndex].gaitPosZ - g_Hexapod.TotalTransZ,
-                g_Legs[LegIndex].gaitRotY, g_Hexapod.BodyRotOffsetX, g_Hexapod.BodyRotOffsetY, g_Hexapod.BodyRotOffsetZ, g_Hexapod.TotalXBal1, g_Hexapod.TotalYBal1, g_Hexapod.TotalZBal1);
-        g_Legs[LegIndex].calculateLegIK(g_Legs[LegIndex].posX+g_InControlState.BodyPos.x-g_Legs[LegIndex].bodyFKPosX+g_Legs[LegIndex].gaitPosX - g_Hexapod.TotalTransX,
-                g_Legs[LegIndex].posY+g_InControlState.BodyPos.y-g_Legs[LegIndex].bodyFKPosY+g_Legs[LegIndex].gaitPosY - g_Hexapod.TotalTransY,
-                g_Legs[LegIndex].posZ+g_InControlState.BodyPos.z-g_Legs[LegIndex].bodyFKPosZ+g_Legs[LegIndex].gaitPosZ - g_Hexapod.TotalTransZ);
-     }
-    
-    CheckAngles();
-    // g_Hexapod.LedC = g_Hexapod.IKSolutionWarning; g_Hexapod.LedA = g_Hexapod.IKSolutionError;
-            
-    if (g_InControlState.fHexOn) {
-        if (!g_InControlState.fPrev_HexOn) {
-            MSound(3, 60, 2000, 80, 2250, 100, 2500);
-            g_Hexapod.Eyes = 1;
-        }
-        
-        if ((abs(g_InControlState.TravelLength.x)>cTravelDeadZone) || (abs(g_InControlState.TravelLength.z)>cTravelDeadZone) || (abs(g_InControlState.TravelLength.y*2)>cTravelDeadZone)) {         
-            g_Hexapod.ServoMoveTime = g_Hexapod.NomGaitSpeed + (g_InControlState.InputTimeDelay*2) + g_InControlState.SpeedControl;
-            if (g_InControlState.BalanceMode) g_Hexapod.ServoMoveTime += 100;
-        } else g_Hexapod.ServoMoveTime = 200 + g_InControlState.SpeedControl;
-        
-        StartUpdateServos();
-        g_Hexapod.fContinueWalking = false;
-            
-        for (uint8_t LegIndex = 0; LegIndex <= 5; LegIndex++) {
-            if ( (abs(g_Legs[LegIndex].gaitPosX) > 2) || (abs(g_Legs[LegIndex].gaitPosY) > 2) || (abs(g_Legs[LegIndex].gaitPosZ) > 2) || (abs(g_Legs[LegIndex].gaitRotY) > 2) ) {
-                g_Hexapod.fContinueWalking = true;
-                break;
-            }
-        }
-
-        if (g_Hexapod.fWalking || g_Hexapod.fContinueWalking) {
-            g_Hexapod.fWalking = g_Hexapod.fContinueWalking;
-            g_Hexapod.lTimerEnd = millis();
-            if (g_Hexapod.lTimerEnd > g_Hexapod.lTimerStart) g_Hexapod.CycleTime = g_Hexapod.lTimerEnd-g_Hexapod.lTimerStart;
-            else g_Hexapod.CycleTime = 0xffffffffL - g_Hexapod.lTimerEnd + g_Hexapod.lTimerStart + 1;
-            delay(min(max ((int)(g_Hexapod.PrevServoMoveTime - g_Hexapod.CycleTime), 1), (int)g_Hexapod.NomGaitSpeed)); 
-        }
-        delay(20); 
-        
-    } else {
+    if (CheckVoltage()) {
         if (g_InControlState.fPrev_HexOn || (g_Hexapod.AllDown == 0)) {
             g_Hexapod.ServoMoveTime = 600;
             StartUpdateServos();
@@ -183,14 +100,132 @@ void loop(void)
             g_ServoDriver.FreeServos();
             g_Hexapod.Eyes = 0;
         }
+        g_InControlState.fHexOn = false;
+    } else {
+        if (!g_Hexapod.fLowVoltageShutdown) g_InputController.ControlInput();
+        WriteOutputs();
 
-#ifdef OPT_TERMINAL_MONITOR  
-        TerminalMonitor();
+#ifdef OPT_GPPLAYER
+        g_ServoDriver.GPPlayer();
 #endif
-        delay(20);
+
+        SingleLegControl();
+        GaitSeq();
+                 
+        g_Hexapod.TotalTransX = g_Hexapod.TotalTransZ = g_Hexapod.TotalTransY = 0;
+        g_Hexapod.TotalXBal1 = g_Hexapod.TotalYBal1 = g_Hexapod.TotalZBal1 = 0;
+
+        if (g_InControlState.BalanceMode) {
+            for (uint8_t LegIndex = 0; LegIndex <= 2; LegIndex++) {
+                BalCalcOneLeg (-g_Legs[LegIndex].posX+g_Legs[LegIndex].gaitPosX, 
+                            g_Legs[LegIndex].posZ+g_Legs[LegIndex].gaitPosZ, 
+                            (g_Legs[LegIndex].posY-(short)pgm_read_word(&cInitPosY[LegIndex]))+g_Legs[LegIndex].gaitPosY, LegIndex);
+            }
+            for (uint8_t LegIndex = 3; LegIndex <= 5; LegIndex++) {
+                BalCalcOneLeg(g_Legs[LegIndex].posX+g_Legs[LegIndex].gaitPosX, 
+                            g_Legs[LegIndex].posZ+g_Legs[LegIndex].gaitPosZ, 
+                            (g_Legs[LegIndex].posY-(short)pgm_read_word(&cInitPosY[LegIndex]))+g_Legs[LegIndex].gaitPosY, LegIndex);
+            }
+            BalanceBody();
+        }
+              
+        g_Hexapod.IKSolution = g_Hexapod.IKSolutionWarning = g_Hexapod.IKSolutionError = 0;
+                
+        for (uint8_t LegIndex = 0; LegIndex <= 2; LegIndex++) {    
+            g_Legs[LegIndex].calculateBodyFK(-g_Legs[LegIndex].posX+g_InControlState.BodyPos.x+g_Legs[LegIndex].gaitPosX - g_Hexapod.TotalTransX,
+                    g_Legs[LegIndex].posY+g_InControlState.BodyPos.y+g_Legs[LegIndex].gaitPosY - g_Hexapod.TotalTransY,
+                    g_Legs[LegIndex].posZ+g_InControlState.BodyPos.z+g_Legs[LegIndex].gaitPosZ - g_Hexapod.TotalTransZ,
+                    g_Legs[LegIndex].gaitRotY, g_Hexapod.BodyRotOffsetX, g_Hexapod.BodyRotOffsetY, g_Hexapod.BodyRotOffsetZ, g_Hexapod.TotalXBal1, g_Hexapod.TotalYBal1, g_Hexapod.TotalZBal1);
+
+            g_Legs[LegIndex].calculateLegIK(g_Legs[LegIndex].posX-g_InControlState.BodyPos.x+g_Legs[LegIndex].bodyFKPosX-(g_Legs[LegIndex].gaitPosX - g_Hexapod.TotalTransX), 
+                    g_Legs[LegIndex].posY+g_InControlState.BodyPos.y-g_Legs[LegIndex].bodyFKPosY+g_Legs[LegIndex].gaitPosY - g_Hexapod.TotalTransY,
+                    g_Legs[LegIndex].posZ+g_InControlState.BodyPos.z-g_Legs[LegIndex].bodyFKPosZ+g_Legs[LegIndex].gaitPosZ - g_Hexapod.TotalTransZ);
+        }
+
+        for (uint8_t LegIndex = 3; LegIndex <= 5; LegIndex++) {
+            g_Legs[LegIndex].calculateBodyFK(g_Legs[LegIndex].posX-g_InControlState.BodyPos.x+g_Legs[LegIndex].gaitPosX - g_Hexapod.TotalTransX,
+                    g_Legs[LegIndex].posY+g_InControlState.BodyPos.y+g_Legs[LegIndex].gaitPosY - g_Hexapod.TotalTransY,
+                    g_Legs[LegIndex].posZ+g_InControlState.BodyPos.z+g_Legs[LegIndex].gaitPosZ - g_Hexapod.TotalTransZ,
+                    g_Legs[LegIndex].gaitRotY, g_Hexapod.BodyRotOffsetX, g_Hexapod.BodyRotOffsetY, g_Hexapod.BodyRotOffsetZ, g_Hexapod.TotalXBal1, g_Hexapod.TotalYBal1, g_Hexapod.TotalZBal1);
+            g_Legs[LegIndex].calculateLegIK(g_Legs[LegIndex].posX+g_InControlState.BodyPos.x-g_Legs[LegIndex].bodyFKPosX+g_Legs[LegIndex].gaitPosX - g_Hexapod.TotalTransX,
+                    g_Legs[LegIndex].posY+g_InControlState.BodyPos.y-g_Legs[LegIndex].bodyFKPosY+g_Legs[LegIndex].gaitPosY - g_Hexapod.TotalTransY,
+                    g_Legs[LegIndex].posZ+g_InControlState.BodyPos.z-g_Legs[LegIndex].bodyFKPosZ+g_Legs[LegIndex].gaitPosZ - g_Hexapod.TotalTransZ);
+        }
+        
+        CheckAngles();
+                
+        if (g_InControlState.fHexOn) {
+            if (!g_InControlState.fPrev_HexOn) {
+                MSound(3, 60, 2000, 80, 2250, 100, 2500);
+                g_Hexapod.Eyes = 1;
+            }
+            
+            if ((abs(g_InControlState.TravelLength.x)>cTravelDeadZone) || (abs(g_InControlState.TravelLength.z)>cTravelDeadZone) || (abs(g_InControlState.TravelLength.y*2)>cTravelDeadZone)) {         
+                g_Hexapod.ServoMoveTime = g_Hexapod.NomGaitSpeed + (g_InControlState.InputTimeDelay*2) + g_InControlState.SpeedControl;
+                if (g_InControlState.BalanceMode) g_Hexapod.ServoMoveTime += 100;
+            } else g_Hexapod.ServoMoveTime = 200 + g_InControlState.SpeedControl;
+            
+            StartUpdateServos();
+            
+            unsigned long lSerialStart = micros();
+            g_ServoDriver.CommitServoDriver(g_Hexapod.ServoMoveTime);
+            unsigned long lSerialFrameTime = micros() - lSerialStart;
+            if (lSerialFrameTime > g_Hexapod.lSerialTimeMax) g_Hexapod.lSerialTimeMax = lSerialFrameTime;
+
+            g_Hexapod.fContinueWalking = false;
+                
+            for (uint8_t LegIndex = 0; LegIndex <= 5; LegIndex++) {
+                if ( (abs(g_Legs[LegIndex].gaitPosX) > 2) || (abs(g_Legs[LegIndex].gaitPosY) > 2) || (abs(g_Legs[LegIndex].gaitPosZ) > 2) || (abs(g_Legs[LegIndex].gaitRotY) > 2) ) {
+                    g_Hexapod.fContinueWalking = true;
+                    break;
+                }
+            }
+
+            if (g_Hexapod.fWalking || g_Hexapod.fContinueWalking) {
+                g_Hexapod.fWalking = g_Hexapod.fContinueWalking;
+                g_Hexapod.lTimerEnd = millis();
+                if (g_Hexapod.lTimerEnd > g_Hexapod.lTimerStart) g_Hexapod.CycleTime = g_Hexapod.lTimerEnd-g_Hexapod.lTimerStart;
+                else g_Hexapod.CycleTime = 0xffffffffL - g_Hexapod.lTimerEnd + g_Hexapod.lTimerStart + 1;
+
+                unsigned long lFrameLogicEnd = micros();
+                unsigned long lFrameLogicTime = lFrameLogicEnd - g_Hexapod.lLogicTimeStart;
+                if (lFrameLogicTime > g_Hexapod.lLogicTimeMax) g_Hexapod.lLogicTimeMax = lFrameLogicTime;
+
+                if (g_Hexapod.fShowProfile && (millis() - g_Hexapod.lProfileWindowStart > 1000)) {
+                    Serial.print("[PROFILE] Total: ");
+                    Serial.print(g_Hexapod.lLogicTimeMax);
+                    Serial.print(" us (Serial: ");
+                    Serial.print(g_Hexapod.lSerialTimeMax);
+                    Serial.print(" us, Math: ");
+                    Serial.print(g_Hexapod.lLogicTimeMax - g_Hexapod.lSerialTimeMax);
+                    Serial.println(" us)");
+                    g_Hexapod.lLogicTimeMax = 0;
+                    g_Hexapod.lSerialTimeMax = 0;
+                    g_Hexapod.lProfileWindowStart = millis();
+                }
+
+                delay(min(max ((int)(g_Hexapod.PrevServoMoveTime - g_Hexapod.CycleTime), 1), (int)g_Hexapod.NomGaitSpeed)); 
+            }
+            delay(20); 
+        } else {
+            if (g_InControlState.fPrev_HexOn || (g_Hexapod.AllDown == 0)) {
+                g_Hexapod.ServoMoveTime = 600;
+                StartUpdateServos();
+                g_ServoDriver.CommitServoDriver(g_Hexapod.ServoMoveTime);
+                MSound(3, 100, 2500, 80, 2250, 60, 2000);
+                delay(600);
+            } else {
+                g_ServoDriver.FreeServos();
+                g_Hexapod.Eyes = 0;
+            }
+            delay(20);
+        }
     }
 
-    g_ServoDriver.CommitServoDriver(g_Hexapod.ServoMoveTime);
+#ifdef OPT_TERMINAL_MONITOR  
+    TerminalMonitor();
+#endif
+
     g_Hexapod.PrevServoMoveTime = g_Hexapod.ServoMoveTime;
     g_InControlState.fPrev_HexOn = g_InControlState.fHexOn;
 }
@@ -295,6 +330,16 @@ bool TerminalMonitor(void) {
         if (ich == 0) g_fShowDebugPrompt = true;
         else if ((ich == 1) && ((szCmdLine[0] == 'd') || (szCmdLine[0] == 'D'))) {
             g_fDebugOutput = !g_fDebugOutput;
+        }
+        else if ((ich == 1) && ((szCmdLine[0] == 'p') || (szCmdLine[0] == 'P'))) {
+            g_Hexapod.fShowProfile = !g_Hexapod.fShowProfile;
+            if (g_Hexapod.fShowProfile) {
+                DBGSerial.println("Performance Profiling: ENABLED");
+                g_Hexapod.lProfileWindowStart = millis();
+                g_Hexapod.lLogicTimeMax = 0;
+            } else {
+                DBGSerial.println("Performance Profiling: DISABLED");
+            }
         }
         return true;
     }
