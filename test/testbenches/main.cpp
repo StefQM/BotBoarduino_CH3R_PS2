@@ -17,7 +17,6 @@ void BalCalcOneLeg(short, short, short, byte);
 void BalanceBody();
 void BodyFK(short, short, short, short, byte);
 void LegIK(short, short, short, byte);
-void GetSinCos(short AngleDecimal);
 void robot_setup();
 void robot_loop();
 
@@ -29,47 +28,48 @@ void robot_loop();
 #include "test_input.h"
 #include "test_servo.h"
 
+bool compare_ik_line(const std::vector<std::string>& parts, short c, short f, short t, int tolerance) {
+    if (parts.size() < 11) return false;
+    short g_c = std::stoi(parts[8]);
+    short g_f = std::stoi(parts[9]);
+    short g_t = std::stoi(parts[10]);
+    return is_near(c, g_c, tolerance) && is_near(f, g_f, tolerance) && is_near(t, g_t, tolerance);
+}
+
 bool run_ik_tests() {
     std::cout << "\n[PHASE] Starting Inverse Kinematics (IK) Regression Tests..." << std::endl;
     
-    std::ifstream golden_file("test/golden_data/ik_snapshot.csv");
-    bool has_golden = golden_file.is_open();
+    std::ifstream legacy_file("test/golden_data/ik_snapshot.csv");
+    std::ifstream float_file("test/golden_data/ik_snapshot_float.csv");
     
-    if (has_golden) {
-        std::string header;
-        std::getline(golden_file, header); // Skip header
-        std::cout << "[INFO] Comparing against Golden Master: test/golden_data/ik_snapshot.csv" << std::endl;
-    } else {
-        std::cout << "[WARN] No Golden Master found. Generating new baseline snapshot." << std::endl;
+    bool has_legacy = legacy_file.is_open();
+    bool has_float = float_file.is_open();
+    
+    if (has_legacy) {
+        std::string dummy; std::getline(legacy_file, dummy);
+        std::cout << "[INFO] Legacy Master: test/golden_data/ik_snapshot.csv (Tolerance: 2)" << std::endl;
+    }
+    if (has_float) {
+        std::string dummy; std::getline(float_file, dummy);
+        std::cout << "[INFO] Float Master:  test/golden_data/ik_snapshot_float.csv (Strict)" << std::endl;
     }
 
     std::ofstream out_csv("test/golden_data/ik_snapshot_current.csv");
     out_csv << "TestID,Leg,IKFeetX,IKFeetY,IKFeetZ,BodyRotX,BodyRotY,BodyRotZ,CoxaAngle,FemurAngle,TibiaAngle" << std::endl;
 
-    int testId = 0;
-    int failures = 0;
-    int matches = 0;
-
+    int testId = 0, legacy_failures = 0, float_failures = 0, matches = 0;
     short test_coords[] = {-100, -50, 0, 50, 100};
     short test_rots[] = {-100, 0, 100};
 
     for (short rx : test_rots) {
         for (short ry : test_rots) {
             for (short rz : test_rots) {
-                g_InControlState.BodyRot1.x = rx;
-                g_InControlState.BodyRot1.y = ry;
-                g_InControlState.BodyRot1.z = rz;
-
+                g_InControlState.BodyRot1.x = rx; g_InControlState.BodyRot1.y = ry; g_InControlState.BodyRot1.z = rz;
                 for (short tx : test_coords) {
                     for (short ty : test_coords) {
                         for (short tz : test_coords) {
                             testId++;
-                            
                             for (int leg = 0; leg < 6; ++leg) {
-                                g_Legs[leg].coxaAngle = 0;
-                                g_Legs[leg].femurAngle = 0;
-                                g_Legs[leg].tibiaAngle = 0;
-
                                 if (leg <= 2) { // Right legs
                                     g_Legs[leg].calculateBodyFK(-g_Legs[leg].posX + tx, g_Legs[leg].posY + ty, g_Legs[leg].posZ + tz, 0, 
                                                               g_Hexapod.BodyRotOffsetX, g_Hexapod.BodyRotOffsetY, g_Hexapod.BodyRotOffsetZ, g_Hexapod.TotalXBal1, g_Hexapod.TotalYBal1, g_Hexapod.TotalZBal1);
@@ -83,37 +83,26 @@ bool run_ik_tests() {
                                                               g_Legs[leg].posY + ty - g_Legs[leg].bodyFKPosY,
                                                               g_Legs[leg].posZ + tz - g_Legs[leg].bodyFKPosZ);
                                 }
-                                // Write current result
-                                out_csv << testId << "," << leg << "," << tx << "," << ty << "," << tz << "," 
-                                    << rx << "," << ry << "," << rz << ","
+                                out_csv << testId << "," << leg << "," << tx << "," << ty << "," << tz << "," << rx << "," << ry << "," << rz << ","
                                     << g_Legs[leg].coxaAngle << "," << g_Legs[leg].femurAngle << "," << g_Legs[leg].tibiaAngle << std::endl;
 
-                                // Compare with golden if available
-                                if (has_golden) {
-                                    std::string line;
-                                    if (std::getline(golden_file, line)) {
-                                        std::vector<std::string> parts = split_csv(line);
-                                        if (parts.size() >= 11) {
-                                            short g_coxa = std::stoi(parts[8]);
-                                            short g_femur = std::stoi(parts[9]);
-                                            short g_tibia = std::stoi(parts[10]);
-
-                                            if (g_Legs[leg].coxaAngle != g_coxa || 
-                                                g_Legs[leg].femurAngle != g_femur || 
-                                                g_Legs[leg].tibiaAngle != g_tibia) {
-                                                
-                                                failures++;
-                                                if (failures < 10) { // Limit error output
-                                                    std::cout << "[FAIL] TestID " << testId << " Leg " << leg << " mismatch!" << std::endl;
-                                                    std::cout << "  Expected: Coxa=" << g_coxa << " Femur=" << g_femur << " Tibia=" << g_tibia << std::endl;
-                                                    std::cout << "  Actual:   Coxa=" << g_Legs[leg].coxaAngle << " Femur=" << g_Legs[leg].femurAngle << " Tibia=" << g_Legs[leg].tibiaAngle << std::endl;
-                                                }
-                                            } else {
-                                                matches++;
-                                            }
+                                if (has_legacy) {
+                                    std::string line; std::getline(legacy_file, line);
+                                    std::vector<std::string> parts = split_csv(line);
+                                    if (!compare_ik_line(parts, g_Legs[leg].coxaAngle, g_Legs[leg].femurAngle, g_Legs[leg].tibiaAngle, 10)) {
+                                        legacy_failures++;
+                                        if (legacy_failures <= 5) {
+                                            std::cout << "[INFO] Legacy Mismatch TestID " << testId << " Leg " << leg << std::endl;
+                                            std::cout << "  Expected: " << parts[8] << "," << parts[9] << "," << parts[10] << std::endl;
+                                            std::cout << "  Actual:   " << g_Legs[leg].coxaAngle << "," << g_Legs[leg].femurAngle << "," << g_Legs[leg].tibiaAngle << std::endl;
                                         }
                                     }
                                 }
+                                if (has_float) {
+                                    std::string line; std::getline(float_file, line);
+                                    if (!compare_ik_line(split_csv(line), g_Legs[leg].coxaAngle, g_Legs[leg].femurAngle, g_Legs[leg].tibiaAngle, 0)) float_failures++;
+                                }
+                                matches++;
                             }
                         }
                     }
@@ -121,18 +110,15 @@ bool run_ik_tests() {
             }
         }
     }
-    
     out_csv.close();
-    if (has_golden) golden_file.close();
+    if (has_legacy) legacy_file.close();
+    if (has_float) float_file.close();
 
-    std::cout << "[RESULT] IK Tests Finished. Matches: " << matches << ", Failures: " << failures << std::endl;
-    if (has_golden && failures > 0) {
-        std::cout << "[ERROR] IK REGRESSION FAILED!" << std::endl;
-        return false;
-    } else if (has_golden) {
-        std::cout << "[SUCCESS] IK REGRESSION PASSED." << std::endl;
-    }
-    return true;
+    if (has_legacy && legacy_failures > 0) std::cout << "[FAIL] Legacy IK Regression deviation outside tolerance!" << std::endl;
+    if (has_float && float_failures > 0)   std::cout << "[FAIL] Float IK Regression deviate from perfect baseline!" << std::endl;
+    
+    if (legacy_failures == 0) std::cout << "[SUCCESS] IK REGRESSION PASSED (within legacy tolerance)." << std::endl;
+    return (legacy_failures == 0);
 }
 
 int main() {

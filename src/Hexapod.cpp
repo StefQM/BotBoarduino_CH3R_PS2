@@ -1,5 +1,10 @@
 #include "Hexapod.h"
 #include "Hex_Globals.h"
+#include <math.h>
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846f
+#endif
 
 Hexapod g_Hexapod;
 
@@ -32,8 +37,6 @@ void Hexapod::init() {
     IKSolutionWarning = false;
     IKSolutionError = false;
     BodyRotOffsetX = BodyRotOffsetY = BodyRotOffsetZ = 0;
-
-    sin4 = 0; cos4 = 0; AngleRad4 = 0; Atan4 = 0; XYhyp2 = 0;
 
     fWalking = false;
     fContinueWalking = false;
@@ -158,20 +161,17 @@ void Hexapod::Gait (uint8_t GaitCurrentLegNr)
 
 void Hexapod::BalCalcOneLeg (short PosX, short PosZ, short PosY, uint8_t BalLegNr)
 {
-    short CPR_X, CPR_Y, CPR_Z;
-    long lAtan;
-    CPR_Z = (short)cOffsetZ[BalLegNr] + PosZ;
-    CPR_X = (short)cOffsetX[BalLegNr] + PosX;
-    CPR_Y = 150 + PosY;
+    float CPR_X, CPR_Y, CPR_Z;
+    CPR_Z = (float)((short)cOffsetZ[BalLegNr] + PosZ);
+    CPR_X = (float)((short)cOffsetX[BalLegNr] + PosX);
+    CPR_Y = (float)(150 + PosY);
     TotalTransY += (long)PosY;
     TotalTransZ += (long)CPR_Z;
     TotalTransX += (long)CPR_X;
-    lAtan = GetATan2(CPR_X, CPR_Z);
-    TotalYBal1 += (lAtan*1800) / 31415;
-    lAtan = GetATan2 (CPR_X, CPR_Y);
-    TotalZBal1 += ((lAtan*1800) / 31415) -900; 
-    lAtan = GetATan2 (CPR_Z, CPR_Y);
-    TotalXBal1 += ((lAtan*1800) / 31415) - 900; 
+
+    TotalYBal1 += (long)(atan2f(CPR_Z, CPR_X) * 1800.0f / M_PI);
+    TotalZBal1 += (long)(atan2f(CPR_Y, CPR_X) * 1800.0f / M_PI) - 900; 
+    TotalXBal1 += (long)(atan2f(CPR_Y, CPR_Z) * 1800.0f / M_PI) - 900; 
 }  
 
 void Hexapod::BalanceBody(void)
@@ -228,50 +228,3 @@ bool Hexapod::CheckVoltage() {
   return fLowVoltageShutdown;
 }
 
-void Hexapod::GetSinCos(short AngleDeg1) {
-    short ABSAngleDeg1 = (AngleDeg1 < 0) ? AngleDeg1 *-1 : AngleDeg1;
-    if (AngleDeg1 < 0) AngleDeg1 = 3600-(ABSAngleDeg1-(3600*(ABSAngleDeg1/3600)));
-    else AngleDeg1 = ABSAngleDeg1-(3600*(ABSAngleDeg1/3600));
-    if (AngleDeg1>=0 && AngleDeg1<=900) {
-        sin4 = GetSin[AngleDeg1/5];
-        cos4 = GetSin[(900-AngleDeg1)/5];
-    } else if (AngleDeg1>900 && AngleDeg1<=1800) {
-        sin4 = GetSin[(1800-AngleDeg1)/5];
-        cos4 = -GetSin[(AngleDeg1-900)/5];            
-    } else if (AngleDeg1>1800 && AngleDeg1<=2700) {
-        sin4 = -GetSin[(AngleDeg1-1800)/5];
-        cos4 = -GetSin[(2700-AngleDeg1)/5];
-    } else if(AngleDeg1>2700 && AngleDeg1<=3600) {
-        sin4 = -GetSin[(3600-AngleDeg1)/5];
-        cos4 = GetSin[(AngleDeg1-2700)/5];            
-    }
-}
-
-long Hexapod::GetArcCos(short cos4_in) {
-    bool NegativeValue = (cos4_in < 0);
-    if (NegativeValue) cos4_in = -cos4_in;
-    cos4_in = min(cos4_in, (short)c4DEC);
-    if ((cos4_in>=0) && (cos4_in<9000)) AngleRad4 = ((long)(uint8_t)GetACos[cos4_in/79]*616)/c1DEC;
-    else if ((cos4_in>=9000) && (cos4_in<9900)) AngleRad4 = ((long)(uint8_t)GetACos[(cos4_in-9000)/8+114]*616)/c1DEC;
-    else if ((cos4_in>=9900) && (cos4_in<=10000)) AngleRad4 = ((long)(uint8_t)GetACos[(cos4_in-9900)/2+227]*616)/c1DEC;
-    if (NegativeValue) AngleRad4 = 31416 - AngleRad4;
-    return AngleRad4;
-}
-
-unsigned long Hexapod::isqrt32(unsigned long n) {
-    unsigned long root = 0, remainder = n, place = 0x40000000;
-    while (place > remainder) place = place >> 2;
-    while (place) {
-        if (remainder >= root + place) { remainder = remainder - root - place; root = root + (place << 1); }
-        root = root >> 1; place = place >> 2;
-    }
-    return root;
-}
-
-short Hexapod::GetATan2(short AtanX_in, short AtanY_in) {
-    XYhyp2 = isqrt32(((long)AtanX_in*AtanX_in*c4DEC) + ((long)AtanY_in*AtanY_in*c4DEC));
-    if (XYhyp2 > 0) GetArcCos(((long)AtanX_in*(long)c6DEC) /(long) XYhyp2);
-    else AngleRad4 = 0;
-    if (AtanY_in < 0) Atan4 = -AngleRad4; else Atan4 = AngleRad4;
-    return Atan4;
-}

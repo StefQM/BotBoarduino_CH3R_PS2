@@ -10,10 +10,6 @@
 #include "Leg.h"
 #include "InputController.h"
 
-// --- Math Tables (Defined in .ino) ---
-extern const uint8_t GetACos[] PROGMEM;
-extern const word GetSin[] PROGMEM;
-
 class Hexapod {
 public:
     // --- Timing ---
@@ -52,13 +48,6 @@ public:
     bool IKSolutionError;
     short BodyRotOffsetX, BodyRotOffsetY, BodyRotOffsetZ;
 
-    // --- Math Buffers (Moved from globals) ---
-    short sin4;
-    short cos4;
-    short AngleRad4;
-    short Atan4;
-    short XYhyp2;
-
     // --- Status ---
     bool fWalking;
     bool fContinueWalking;
@@ -81,11 +70,6 @@ public:
     void BalCalcOneLeg(short PosX, short PosZ, short PosY, uint8_t BalLegNr);
     void CheckAngles();
     bool CheckVoltage();
-    
-    void GetSinCos(short AngleDeg1);
-    long GetArcCos(short cos4);
-    short GetATan2(short AtanX, short AtanY);
-    unsigned long isqrt32(unsigned long n);
 };
 
 extern Hexapod g_Hexapod;

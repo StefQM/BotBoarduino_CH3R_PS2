@@ -369,9 +369,9 @@ void AdjustLegPositionsToBodyHeight(void) {
     if (i != g_iLegInitIndex) { 
        g_iLegInitIndex = i;
        for (uint8_t li = 0; li <= 5; li++) {
-           g_Hexapod.GetSinCos((short)cCoxaAngle1[li]);
-           g_Legs[li].posX = ((long)((long)g_Hexapod.cos4 * XZLength1))/c4DEC;
-           g_Legs[li].posZ = -((long)((long)g_Hexapod.sin4 * XZLength1))/c4DEC;
+           float angleRad = (float)((short)cCoxaAngle1[li]) * M_PI / 1800.0f;
+           g_Legs[li].posX = (short)(cosf(angleRad) * XZLength1);
+           g_Legs[li].posZ = (short)(-sinf(angleRad) * XZLength1);
        }
        g_InControlState.ForceGaitStepCnt = g_Hexapod.StepsInGait;
     }

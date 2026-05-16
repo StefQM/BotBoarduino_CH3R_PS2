@@ -1,5 +1,10 @@
 #include "Leg.h"
 #include "Hex_Globals.h"
+#include <math.h>
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846f
+#endif
 
 // Macro equivalents for LegIK
 #ifdef c4DOF
@@ -25,77 +30,86 @@ void Leg::init(uint8_t legIndex) {
 void Leg::calculateBodyFK(short tx, short ty, short tz, short rotationY, 
                         short bodyRotOffsetX, short bodyRotOffsetY, short bodyRotOffsetZ,
                         short totalXBal, short totalYBal, short totalZBal) {
-    short            SinA4, CosA4, SinB4, CosB4, SinG4, CosG4;
-    short            CPR_X, CPR_Y, CPR_Z;
+    float SinA, CosA, SinB, CosB, SinG, CosG;
+    float CPR_X, CPR_Y, CPR_Z;
 
     //Calculating totals from center of the body to the feet
-    CPR_X = (short)cOffsetX[index] + tx + bodyRotOffsetX;
-    CPR_Y = ty + bodyRotOffsetY;
-    CPR_Z = (short)cOffsetZ[index] + tz + bodyRotOffsetZ;
+    CPR_X = (float)((short)cOffsetX[index] + tx + bodyRotOffsetX);
+    CPR_Y = (float)(ty + bodyRotOffsetY);
+    CPR_Z = (float)((short)cOffsetZ[index] + tz + bodyRotOffsetZ);
 
-    g_Hexapod.GetSinCos (g_InControlState.BodyRot1.x + totalXBal);
-    SinG4 = g_Hexapod.sin4; CosG4 = g_Hexapod.cos4;
+    float angleG = (float)(g_InControlState.BodyRot1.x + totalXBal) * M_PI / 1800.0f;
+    SinG = sinf(angleG); CosG = cosf(angleG);
 
-    g_Hexapod.GetSinCos (g_InControlState.BodyRot1.z + totalZBal);
-    SinB4 = g_Hexapod.sin4; CosB4 = g_Hexapod.cos4;
+    float angleB = (float)(g_InControlState.BodyRot1.z + totalZBal) * M_PI / 1800.0f;
+    SinB = sinf(angleB); CosB = cosf(angleB);
 
-    g_Hexapod.GetSinCos (g_InControlState.BodyRot1.y + (rotationY * c1DEC) + totalYBal) ;
-    SinA4 = g_Hexapod.sin4; CosA4 = g_Hexapod.cos4;
+    float angleA = (float)(g_InControlState.BodyRot1.y + (rotationY * 10) + totalYBal) * M_PI / 1800.0f;
+    SinA = sinf(angleA); CosA = cosf(angleA);
 
-    bodyFKPosX = ((long)CPR_X*c2DEC - ((long)CPR_X*c2DEC*CosA4/c4DEC*CosB4/c4DEC - (long)CPR_Z*c2DEC*CosB4/c4DEC*SinA4/c4DEC 
-                + (long)CPR_Y*c2DEC*SinB4/c4DEC ))/c2DEC;
-    bodyFKPosZ = ((long)CPR_Z*c2DEC - ( (long)CPR_X*c2DEC*CosG4/c4DEC*SinA4/c4DEC + (long)CPR_X*c2DEC*CosA4/c4DEC*SinB4/c4DEC*SinG4/c4DEC 
-                + (long)CPR_Z*c2DEC*CosA4/c4DEC*CosG4/c4DEC - (long)CPR_Z*c2DEC*SinA4/c4DEC*SinB4/c4DEC*SinG4/c4DEC 
-                - (long)CPR_Y*c2DEC*CosB4/c4DEC*SinG4/c4DEC ))/c2DEC;
-    bodyFKPosY = ((long)CPR_Y  *c2DEC - ( (long)CPR_X*c2DEC*SinA4/c4DEC*SinG4/c4DEC - (long)CPR_X*c2DEC*CosA4/c4DEC*CosG4/c4DEC*SinB4/c4DEC 
-                + (long)CPR_Z*c2DEC*CosA4/c4DEC*SinG4/c4DEC + (long)CPR_Z*c2DEC*CosG4/c4DEC*SinA4/c4DEC*SinB4/c4DEC 
-                + (long)CPR_Y*c2DEC*CosB4/c4DEC*CosG4/c4DEC ))/c2DEC;
+    bodyFKPosX = (short)(CPR_X - (CPR_X * CosA * CosB - CPR_Z * CosB * SinA + CPR_Y * SinB));
+    bodyFKPosZ = (short)(CPR_Z - (CPR_X * CosG * SinA + CPR_X * CosA * SinB * SinG + CPR_Z * CosA * CosG - CPR_Z * SinA * SinB * SinG - CPR_Y * CosB * SinG));
+    bodyFKPosY = (short)(CPR_Y - (CPR_X * SinA * SinG - CPR_X * CosA * CosG * SinB + CPR_Z * CosA * SinG + CPR_Z * CosG * SinA * SinB + CPR_Y * CosB * CosG));
 }
 
 void Leg::calculateLegIK(short IKFeetPosX, short IKFeetPosY, short IKFeetPosZ) {
-    unsigned long   IKSW2, IKA14, IKA24;
-    short           IKFeetPosXZ;
-#ifdef c4DOF
-    long            TarsOffsetXZ, TarsOffsetY, TarsToGroundAngle1, TGA_A_H4, TGA_B_H3;
-#else
-    long TarsOffsetXZ = 0, TarsOffsetY = 0;
-#endif
-    long            Temp1, Temp2, T3;
+    float IKSW, IKA1, IKA2;
+    float IKFeetPosXZ;
+    float TarsOffsetXZ = 0, TarsOffsetY = 0;
+    short TarsToGroundAngle1 = 0;
 
-    g_Hexapod.GetATan2 (IKFeetPosX, IKFeetPosZ);
-    coxaAngle = (((long)g_Hexapod.Atan4*180) / 3141) + (short)cCoxaAngle1[index];
-    IKFeetPosXZ = g_Hexapod.XYhyp2/c2DEC;
+    // 1. Coxa Angle (Horizontal)
+    IKFeetPosXZ = sqrtf((float)IKFeetPosX * IKFeetPosX + (float)IKFeetPosZ * IKFeetPosZ);
+    float Atan4 = acosf((float)IKFeetPosX / IKFeetPosXZ);
+    if (IKFeetPosZ < 0) Atan4 = -Atan4;
+    coxaAngle = (short)(Atan4 * 1800.0f / M_PI) + (short)cCoxaAngle1[index];
 
 #ifdef c4DOF
     if ((uint8_t)cTarsLength[index]) {
-        TarsToGroundAngle1 = -cTarsConst + cTarsMulti*IKFeetPosY + ((long)(IKFeetPosXZ*cTarsFactorA))/c1DEC - ((long)(IKFeetPosXZ*IKFeetPosY)/(cTarsFactorB));
-        if (IKFeetPosY < 0) TarsToGroundAngle1 -= ((long)(IKFeetPosY*cTarsFactorC)/c1DEC);
-        TGA_B_H3 = (TarsToGroundAngle1 > 400) ? 200 + (TarsToGroundAngle1/2) : TarsToGroundAngle1;
-        TGA_A_H4 = (TarsToGroundAngle1 > 300) ? 240 + (TarsToGroundAngle1/5) : TarsToGroundAngle1;
+        TarsToGroundAngle1 = -cTarsConst + cTarsMulti*IKFeetPosY + ((long)(IKFeetPosXZ*cTarsFactorA))/10 - ((long)(IKFeetPosXZ*IKFeetPosY)/(cTarsFactorB));
+        if (IKFeetPosY < 0) TarsToGroundAngle1 -= ((long)(IKFeetPosY*cTarsFactorC)/10);
+        short TGA_B_H3 = (TarsToGroundAngle1 > 400) ? 200 + (TarsToGroundAngle1/2) : TarsToGroundAngle1;
+        short TGA_A_H4 = (TarsToGroundAngle1 > 300) ? 240 + (TarsToGroundAngle1/5) : TarsToGroundAngle1;
         if (IKFeetPosY > 0) TarsToGroundAngle1 = TGA_A_H4;
-        else if (IKFeetPosY > -10) TarsToGroundAngle1 = (TGA_A_H4 -(((long)IKFeetPosY*(TGA_B_H3-TGA_A_H4))/c1DEC));
+        else if (IKFeetPosY > -10) TarsToGroundAngle1 = (TGA_A_H4 -(((long)IKFeetPosY*(TGA_B_H3-TGA_A_H4))/10));
         else TarsToGroundAngle1 = TGA_B_H3;
-        g_Hexapod.GetSinCos(TarsToGroundAngle1);
-        TarsOffsetXZ = ((long)g_Hexapod.sin4*(uint8_t)cTarsLength[index])/c4DEC;
-        TarsOffsetY = ((long)g_Hexapod.cos4*(uint8_t)cTarsLength[index])/c4DEC;
-    } else { TarsOffsetXZ = 0; TarsOffsetY = 0; }
+
+        float tarsAngleRad = (float)TarsToGroundAngle1 * M_PI / 1800.0f;
+        TarsOffsetXZ = sinf(tarsAngleRad) * (uint8_t)cTarsLength[index];
+        TarsOffsetY = cosf(tarsAngleRad) * (uint8_t)cTarsLength[index];
+    }
 #endif
 
-    IKA14 = g_Hexapod.GetATan2 (IKFeetPosY-TarsOffsetY, IKFeetPosXZ-(uint8_t)cCoxaLength[index]-TarsOffsetXZ);
-    IKSW2 = g_Hexapod.XYhyp2;
-    Temp1 = ((((long)(uint8_t)cFemurLength[index]*(uint8_t)cFemurLength[index]) - ((long)(uint8_t)cTibiaLength[index]*(uint8_t)cTibiaLength[index]))*c4DEC + ((long)IKSW2*IKSW2));
-    Temp2 = (long)(2*(uint8_t)cFemurLength[index])*c2DEC * (unsigned long)IKSW2;
-    T3 = Temp1 / (Temp2/c4DEC);
-    IKA24 = g_Hexapod.GetArcCos (T3 );
-    femurAngle = -(long)(IKA14 + IKA24) * 180 / 3141 + 900 + CFEMURHORNOFFSET1(index);
-    Temp1 = ((((long)(uint8_t)cFemurLength[index]*(uint8_t)cFemurLength[index]) + ((long)(uint8_t)cTibiaLength[index]*(uint8_t)cTibiaLength[index]))*c4DEC - ((long)IKSW2*IKSW2));
-    Temp2 = (2*(uint8_t)cFemurLength[index]*(uint8_t)cTibiaLength[index]);
-    g_Hexapod.GetArcCos (Temp1 / Temp2);
-    tibiaAngle = -(900-(long)g_Hexapod.AngleRad4*180/3141);
+    // 2. Femur and Tibia (Vertical)
+    float vert = (float)IKFeetPosY - TarsOffsetY;
+    float horz = IKFeetPosXZ - (uint8_t)cCoxaLength[index] - TarsOffsetXZ;
+    IKSW = sqrtf(vert*vert + horz*horz);
+    
+    // IKA1 is angle to the foot from the vertical
+    IKA1 = acosf(vert / IKSW);
+    if (horz < 0) IKA1 = -IKA1;
+
+    float femurLen = (float)(uint8_t)cFemurLength[index];
+    float tibiaLen = (float)(uint8_t)cTibiaLength[index];
+
+    // IKA2 is interior angle at the femur
+    float cosIKA2 = (femurLen*femurLen - tibiaLen*tibiaLen + IKSW*IKSW) / (2.0f * femurLen * IKSW);
+    cosIKA2 = fminf(fmaxf(cosIKA2, -1.0f), 1.0f);
+    IKA2 = acosf(cosIKA2);
+    
+    femurAngle = (short)(-(IKA1 + IKA2) * 1800.0f / M_PI) + 900 + CFEMURHORNOFFSET1(index);
+
+    // Tibia interior angle
+    float cosTibia = (femurLen*femurLen + tibiaLen*tibiaLen - IKSW*IKSW) / (2.0f * femurLen * tibiaLen);
+    cosTibia = fminf(fmaxf(cosTibia, -1.0f), 1.0f);
+    tibiaAngle = -(900 - (short)(acosf(cosTibia) * 1800.0f / M_PI));
+
 #ifdef c4DOF
     if ((uint8_t)cTarsLength[index]) tarsAngle = (TarsToGroundAngle1 + femurAngle - tibiaAngle) + CTARSHORNOFFSET1(index);
 #endif
-    if(IKSW2 < ((uint8_t)cFemurLength[index]+(uint8_t)cTibiaLength[index]-30)*c2DEC) g_Hexapod.IKSolution = 1;
-    else if(IKSW2 < ((uint8_t)cFemurLength[index]+(uint8_t)cTibiaLength[index])*c2DEC) g_Hexapod.IKSolutionWarning = 1;
+
+    if(IKSW < (femurLen + tibiaLen - 30.0f)) g_Hexapod.IKSolution = 1;
+    else if(IKSW < (femurLen + tibiaLen)) g_Hexapod.IKSolutionWarning = 1;
     else g_Hexapod.IKSolutionError = 1;
 }
+
