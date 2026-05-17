@@ -37,6 +37,7 @@ The core math was rewritten from complex 16-bit scaled integers (`c1DEC`, `c2DEC
 1.  **5V Safety:** The BotBoard II's 1kΩ pull-up resistors to 5V on `PA7` had to be removed to protect the STM32's high-speed SPI drivers.
 2.  **Library Sensitivity:** Most standard PS2 libraries use hardcoded AVR registers. We successfully bypassed this by implementing a simplified, local hardware-accelerated driver in the `lib/` folder.
 3.  **USB CDC Persistence:** Native USB Serial on STM32 requires `-D PIO_FRAMEWORK_ARDUINO_ENABLE_CDC` and `-D USBCON` flags to be visible to the PC.
+4.  **SSC-32 Startup Quirk:** When servos are "freed" (PWM off), the SSC-32 loses track of their position. The very first move command sent after power-on will always execute at maximum speed, ignoring move-time parameters. **Solution:** We implemented a 2-step startup sequence that engages the motors at height 0 (sitting) first to establish a reference point, followed by a smooth 600ms stand-up move.
 
 ---
 *Migration verified against 20,250 IK master points and 100 gait cycles.*

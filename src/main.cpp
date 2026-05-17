@@ -6,7 +6,7 @@
 //Programmer: Jeroen Janssen [aka Xan]
 //         Kurt Eckhardt(KurtE) converted to C and Arduino
 //
-// This version of the Phoenix code was ported over to the Arduino Environement
+// This version of the Phoenix code was ported over to the Arduino Environment
 // and is specifically configured for the Lynxmotion BotBoarduino 
 //=============================================================================
 // Header Files
@@ -118,13 +118,29 @@ void loop(void)
     } else {
         // [STARTUP TRANSITION]
         if (g_InControlState.fHexOn && !g_InControlState.fPrev_HexOn) {
-            Serial.println("[LOG] Starting Up (600ms move)");
-            MSound(3, 60, 2000, 80, 2250, 100, 2500); // Beep first
+            Serial.println("[LOG] Engaging motors at height 0");
+            
+            // 1. Snap to sitting position to engage motors without violent movement
+            short targetHeight = g_InControlState.BodyPos.y;
+            g_InControlState.BodyPos.y = 0;
             UpdateIK(); 
+            g_Hexapod.ServoMoveTime = 200; // Snap
+            StartUpdateServos();
+            g_ServoDriver.CommitServoDriver(g_Hexapod.ServoMoveTime);
+            
+            MSound(3, 60, 2000, 80, 2250, 100, 2500); // Beep during snap
+            delay(200);
+
+            // 2. Smoothly stand up
+            Serial.println("[LOG] Standing Up (600ms move)");
+            g_InControlState.BodyPos.y = targetHeight;
+            UpdateIK();
             g_Hexapod.ServoMoveTime = 600;
             StartUpdateServos();
             g_ServoDriver.CommitServoDriver(g_Hexapod.ServoMoveTime);
             delay(600); // Block to ensure move completes
+            
+            lTransitionStartTime = millis();
             g_Hexapod.Eyes = 1;
             g_InControlState.fPrev_HexOn = true;
             return; 
