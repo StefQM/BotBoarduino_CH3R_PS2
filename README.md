@@ -26,8 +26,8 @@ This repository contains the modernized, Object-Oriented C++ firmware for the Ly
 
 Mapping of physical headers (Top = USB Port side).
 
-| Left Hdr | Function | Bot Board  | | Right Hdr | Function                 | Bot Board    | 
-| :---     | :---     |            | |:---       | :---                     |              | 
+| Left Hdr | Function | Bot Board  |      | Right Hdr | Function                 | Bot Board    | 
+| :---     | :---     | :---       | :--- | :---      | :---                     | :---         | 
 | **B12**  | -        | RS232-Tx   | | **5V**    | 5Vin                     | 5Vin         | 
 | **B13**  | -        | RS232-Rx   | | **GND**   | GND                      | GND          | 
 | **B14**  | -        | RS232-RTS  | | **3V3**   | n.c.                     | RESETn       | 
